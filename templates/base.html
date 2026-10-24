@@ -1,0 +1,74 @@
+{% load static %}<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Gestion RH{% endblock %} · Gestion RH</title>
+  <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/app.css' %}" rel="stylesheet">
+</head>
+<body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+{% if user.is_authenticated %}
+<nav class="navbar navbar-dark bg-dark d-lg-none px-3 justify-content-start gap-3">
+  <button class="btn btn-outline-light btn-sm" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-label="Menu">
+    <i class="bi bi-list"></i>
+  </button>
+  <span class="navbar-brand mb-0">Gestion RH</span>
+</nav>
+<div class="d-flex">
+  <aside class="offcanvas-lg offcanvas-start sidebar bg-dark text-white" id="sidebar" tabindex="-1">
+    <div class="p-3 d-flex flex-column h-100">
+      <a href="{% url 'home' %}" class="d-flex align-items-center gap-2 text-white text-decoration-none mb-4">
+        <i class="bi bi-people-fill fs-4"></i><span class="fs-5">Gestion RH</span>
+      </a>
+      <ul class="nav nav-pills flex-column gap-1 mb-auto">
+        {% block sidebar %}
+        {% if user.is_admin_role %}
+          {% with url_name=request.resolver_match.url_name %}
+          <li class="nav-item small text-uppercase text-white-50 mt-2 mb-1">Administration</li>
+          <li><a class="nav-link text-white {% if url_name == 'dashboard' %}active{% endif %}" href="{% url 'administration:dashboard' %}"><i class="bi bi-speedometer2 me-2"></i>Tableau de bord</a></li>
+          <li><a class="nav-link text-white {% if 'settings' in url_name %}active{% endif %}" href="{% url 'administration:settings_home' %}"><i class="bi bi-sliders me-2"></i>Paramètres</a></li>
+          <li><a class="nav-link text-white {% if 'user' in url_name %}active{% endif %}" href="{% url 'administration:users' %}"><i class="bi bi-person-gear me-2"></i>Comptes</a></li>
+          <li><a class="nav-link text-white {% if url_name == 'audit' %}active{% endif %}" href="{% url 'administration:audit' %}"><i class="bi bi-journal-text me-2"></i>Journal d'audit</a></li>
+          <li><a class="nav-link text-white" href="{% url 'admin:index' %}"><i class="bi bi-database me-2"></i>Admin Django</a></li>
+          {% endwith %}
+        {% endif %}
+        {% comment %}
+          Les autres modules ajoutent ici leurs liens selon le rôle :
+          {% if user.role == "EMPLOYE" %} … {% endif %}
+          {% if user.role == "MANAGER" %} … {% endif %}
+          {% if user.role == "RH" %} … {% endif %}
+        {% endcomment %}
+        {% endblock %}
+      </ul>
+      <hr class="border-secondary">
+      <div class="d-flex align-items-center justify-content-between">
+        <div class="small">
+          <div>{{ user.get_full_name|default:user.username }}</div>
+          <div class="text-white-50">{{ user.get_role_display }}</div>
+        </div>
+        <form method="post" action="{% url 'logout' %}">{% csrf_token %}
+          <button class="btn btn-sm btn-outline-light" title="Déconnexion" aria-label="Déconnexion"><i class="bi bi-box-arrow-right"></i></button>
+        </form>
+      </div>
+    </div>
+  </aside>
+  <main class="flex-grow-1 p-3 p-lg-4 main-content">
+{% else %}
+  <main class="container py-5">
+{% endif %}
+    {% for message in messages %}
+      <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+      </div>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+{% if user.is_authenticated %}</div>{% endif %}
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+<script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

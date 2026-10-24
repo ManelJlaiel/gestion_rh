@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord{% endblock %}
+{% block content %}
+<h1 class="h3 mb-4">Tableau de bord administrateur</h1>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3"><div class="card stat-card h-100"><div class="card-body">
+    <div class="text-muted small">Comptes</div><div class="stat-value">{{ total_users }}</div>
+    <div class="small text-muted">dont {{ inactive_users }} inactif{{ inactive_users|pluralize }}</div>
+  </div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat-card h-100"><div class="card-body">
+    <div class="text-muted small">Départements</div><div class="stat-value">{{ departments_count }}</div>
+  </div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat-card h-100"><div class="card-body">
+    <div class="text-muted small">Types de congés</div><div class="stat-value">{{ leave_types_count }}</div>
+  </div></div></div>
+  <div class="col-6 col-xl-3"><div class="card stat-card h-100"><div class="card-body">
+    <div class="text-muted small">Actions (7 jours)</div><div class="stat-value">{{ actions_this_week }}</div>
+  </div></div></div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header bg-white">Comptes par rôle</div>
+      <ul class="list-group list-group-flush">
+        {% for label, n in roles %}
+        <li class="list-group-item d-flex justify-content-between">{{ label }}<span class="badge text-bg-secondary">{{ n }}</span></li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header bg-white">Prochains jours fériés</div>
+      <ul class="list-group list-group-flush">
+        {% for h in upcoming_holidays %}
+        <li class="list-group-item d-flex justify-content-between">{{ h.name }}<span class="text-muted">{{ h.date|date:"d/m/Y" }}</span></li>
+        {% empty %}<li class="list-group-item text-muted">Aucun jour férié à venir.</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card h-100">
+      <div class="card-header bg-white d-flex justify-content-between">Dernières actions
+        <a href="{% url 'administration:audit' %}" class="small">Tout voir</a></div>
+      <ul class="list-group list-group-flush small">
+        {% for log in recent_logs %}
+        <li class="list-group-item"><span class="text-muted">{{ log.timestamp|date:"d/m H:i" }}</span> · {{ log.user|default:"—" }} · {{ log.description|default:log.get_action_display }}</li>
+        {% empty %}<li class="list-group-item text-muted">Aucune action enregistrée.</li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

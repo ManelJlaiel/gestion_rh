@@ -1,0 +1,10 @@
+:root { --sidebar-width: 250px; }
+body { background: #f5f6f8; }
+@media (min-width: 992px) {
+  .sidebar { width: var(--sidebar-width); min-height: 100vh; position: sticky; top: 0; }
+}
+.sidebar .nav-link { border-radius: .4rem; }
+.sidebar .nav-link:hover { background: rgba(255,255,255,.08); }
+.main-content { min-width: 0; }
+.stat-card .stat-value { font-size: 1.75rem; font-weight: 600; line-height: 1.1; }
+.table td, .table th { vertical-align: middle; }

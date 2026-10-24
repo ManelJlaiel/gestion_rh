@@ -1,0 +1,5 @@
+<ul class="nav nav-tabs mb-3 flex-nowrap overflow-auto">
+  {% for key, s in sections.items %}
+  <li class="nav-item"><a class="nav-link text-nowrap {% if key == current %}active{% endif %}" href="{% url 'administration:settings' key %}"><i class="bi {{ s.icon }} me-1"></i>{{ s.label }}</a></li>
+  {% endfor %}
+</ul>

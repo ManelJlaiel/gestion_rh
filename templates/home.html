@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Accueil{% endblock %}
+{% block content %}
+<h1 class="h3">Bonjour {{ user.first_name|default:user.username }}</h1>
+<p class="text-muted">Votre espace {{ user.get_role_display }} sera bientôt disponible.</p>
+{% endblock %}

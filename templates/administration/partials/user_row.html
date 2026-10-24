@@ -1,0 +1,21 @@
+<tr id="user-{{ u.pk }}">
+  <td>{{ u.username }}</td>
+  <td>{{ u.get_full_name|default:"—" }}</td>
+  <td>{{ u.email|default:"—" }}</td>
+  <td><span class="badge text-bg-primary bg-opacity-75">{{ u.get_role_display }}</span></td>
+  <td>{% if u.is_active %}<span class="badge text-bg-success">Actif</span>{% else %}<span class="badge text-bg-secondary">Inactif</span>{% endif %}</td>
+  <td class="text-end text-nowrap">
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'administration:user_edit' u.pk %}" title="Modifier" aria-label="Modifier"><i class="bi bi-pencil"></i></a>
+    {% if u != request.user %}
+    <button class="btn btn-sm {% if u.is_active %}btn-outline-warning{% else %}btn-outline-success{% endif %}"
+            hx-post="{% url 'administration:user_toggle' u.pk %}" hx-target="#user-{{ u.pk }}" hx-swap="outerHTML"
+            hx-confirm="{% if u.is_active %}Désactiver{% else %}Réactiver{% endif %} le compte {{ u.username }} ?"
+            title="{% if u.is_active %}Désactiver{% else %}Réactiver{% endif %}" aria-label="{% if u.is_active %}Désactiver{% else %}Réactiver{% endif %}">
+      <i class="bi {% if u.is_active %}bi-person-slash{% else %}bi-person-check{% endif %}"></i>
+    </button>
+    {% endif %}
+    <form method="post" action="{% url 'administration:user_reset' u.pk %}" class="d-inline" onsubmit="return confirm('Réinitialiser le mot de passe de {{ u.username|escapejs }} ?');">{% csrf_token %}
+      <button class="btn btn-sm btn-outline-danger" title="Réinitialiser le mot de passe" aria-label="Réinitialiser le mot de passe"><i class="bi bi-key"></i></button>
+    </form>
+  </td>
+</tr>
