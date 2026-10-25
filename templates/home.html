@@ -1,6 +1,73 @@
 {% extends "base.html" %}
 {% block title %}Accueil{% endblock %}
 {% block content %}
-<h1 class="h3">Bonjour {{ user.first_name|default:user.username }}</h1>
-<p class="text-muted">Votre espace {{ user.get_role_display }} sera bientôt disponible.</p>
+<div class="mb-4">
+  <h1 class="h3 mb-1">Bonjour {{ user.first_name|default:user.username }}</h1>
+  <div class="text-muted">Espace {{ user.get_role_display }}</div>
+</div>
+
+{% if not employee %}
+  <div class="alert alert-info">Aucune fiche employé n'est liée à votre compte. Contactez le service RH pour qu'elle soit associée.</div>
+{% else %}
+<div class="row g-3 mb-4">
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-person-badge me-2"></i>Ma fiche</span>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'organization:my_profile' %}">Voir ma fiche</a>
+      </div>
+      <dl class="row mb-0 p-3">
+        <dt class="col-5">Nom</dt><dd class="col-7">{{ employee.full_name }}</dd>
+        <dt class="col-5">Matricule</dt><dd class="col-7">{{ employee.matricule }}</dd>
+        <dt class="col-5">Poste</dt><dd class="col-7">{{ employee.job_title }}</dd>
+        <dt class="col-5">Département</dt><dd class="col-7">{{ employee.department|default:"—" }}</dd>
+        <dt class="col-5">Manager</dt><dd class="col-7">{{ employee.manager.full_name|default:"—" }}</dd>
+        <dt class="col-5">Date d'embauche</dt><dd class="col-7">{{ employee.hire_date|date:"d/m/Y" }}</dd>
+        <dt class="col-5">Contrat</dt><dd class="col-7">{{ employee.get_contract_type_display }}</dd>
+      </dl>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-lightning me-2"></i>Actions rapides</div>
+      <div class="list-group list-group-flush">
+        <a class="list-group-item list-group-item-action" href="{% url 'organization:my_profile_edit' %}"><i class="bi bi-pencil me-2"></i>Mettre à jour mes informations</a>
+        <a class="list-group-item list-group-item-action" href="{% url 'organization:my_profile' %}"><i class="bi bi-folder2-open me-2"></i>Mes documents <span class="badge text-bg-secondary ms-1">{{ documents_count }}</span></a>
+        <a class="list-group-item list-group-item-action" href="{% url 'organization:org_chart' %}"><i class="bi bi-diagram-2 me-2"></i>Consulter l'organigramme</a>
+        <a class="list-group-item list-group-item-action" href="{% url 'password_change' %}"><i class="bi bi-key me-2"></i>Changer mon mot de passe</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if user.role == "MANAGER" and employee %}
+<div class="card mb-4">
+  <div class="card-header"><i class="bi bi-people me-2"></i>Mon équipe ({{ team|length }})</div>
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light"><tr><th>Nom</th><th>Poste</th><th>Département</th><th>Embauche</th></tr></thead>
+      <tbody>
+        {% for m in team %}
+        <tr>
+          <td><a href="{% url 'organization:employee_detail' m.pk %}">{{ m.full_name }}</a></td>
+          <td>{{ m.job_title }}</td><td>{{ m.department|default:"—" }}</td><td>{{ m.hire_date|date:"d/m/Y" }}</td>
+        </tr>
+        {% empty %}<tr><td colspan="4" class="text-center text-muted py-3">Aucun membre dans votre équipe.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% comment %}
+  Les autres modules ajoutent ici leurs tuiles (une colonne col-md-4 par module) :
+  congés (Eya Kouki), pointage/présences (Eya Kouki), fiches de paie (Manel).
+{% endcomment %}
+<h2 class="h6 text-uppercase text-muted mb-2">Bientôt disponible</h2>
+<div class="row g-3">
+  <div class="col-md-4"><div class="card bg-light h-100"><div class="card-body text-muted"><i class="bi bi-calendar2-week me-2"></i>Mes congés<div class="small">Demandes et solde de congés.</div></div></div></div>
+  <div class="col-md-4"><div class="card bg-light h-100"><div class="card-body text-muted"><i class="bi bi-clock-history me-2"></i>Mon pointage<div class="small">Entrée, sortie et présences.</div></div></div></div>
+  <div class="col-md-4"><div class="card bg-light h-100"><div class="card-body text-muted"><i class="bi bi-receipt me-2"></i>Mes fiches de paie<div class="small">Consultation et téléchargement.</div></div></div></div>
+</div>
 {% endblock %}

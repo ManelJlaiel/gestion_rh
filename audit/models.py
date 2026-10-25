@@ -32,7 +32,12 @@ class AuditLog(models.Model):
 
 
 def log_action(user, action, obj=None, description=""):
-    """Raccourci pour enregistrer une action depuis une vue."""
+    """Raccourci pour enregistrer une action depuis une vue.
+
+    ``user`` peut être None ou anonyme (ex. : échec de connexion) ; ``obj`` est
+    facultatif (ex. : export global). La description est tronquée à 255 caractères.
+    Ne jamais y mettre de donnée sensible (salaire, mot de passe).
+    """
     return AuditLog.objects.create(
         user=user if user and user.is_authenticated else None,
         action=action,
@@ -40,3 +45,16 @@ def log_action(user, action, obj=None, description=""):
         object_id=str(obj.pk) if obj is not None else "",
         description=description[:255],
     )
+
+
+def log_read(user, obj, description=""):
+    """Enregistre la consultation d'un objet sensible (fiche employé, document…)."""
+    return log_action(user, AuditLog.Action.READ, obj, description or f"Consultation : {obj}")
+
+
+def changed_fields(form):
+    """Noms (lisibles) des champs modifiés d'un formulaire, sans leurs valeurs.
+
+    Permet de journaliser « quoi » a changé sans écrire de données sensibles.
+    """
+    return ", ".join(str(form.fields[name].label or name) for name in form.changed_data)

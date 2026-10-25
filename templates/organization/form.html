@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">{{ title }}</h1>
+<div class="card" style="max-width: 720px"><div class="card-body">
+  <form method="post" novalidate {% if multipart %}enctype="multipart/form-data"{% endif %}>
+    {% include "administration/_form_fields.html" %}
+    <div class="d-flex gap-2">
+      <button class="btn btn-primary">Enregistrer</button>
+      <a class="btn btn-outline-secondary" href="{% if cancel_arg %}{% url cancel_url cancel_arg %}{% else %}{% url cancel_url %}{% endif %}">Annuler</a>
+    </div>
+  </form>
+</div></div>
+{% endblock %}

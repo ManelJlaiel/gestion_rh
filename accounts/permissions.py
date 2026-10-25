@@ -19,3 +19,14 @@ def role_required(*roles):
         return wrapper
 
     return decorator
+
+
+# Raccourcis prêts à l'emploi : @rh_only, @rh_or_admin, @manager_or_rh
+rh_only = role_required("RH")
+rh_or_admin = role_required("RH", "ADMIN")
+manager_or_rh = role_required("MANAGER", "RH")
+
+
+def is_rh(user):
+    """Vrai pour le RH (et le superuser) : seul profil qui voit salaires et contrats."""
+    return user.is_authenticated and (user.is_superuser or user.role == "RH")
