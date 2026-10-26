@@ -34,6 +34,19 @@
           <li><a class="nav-link text-white" href="{% url 'admin:index' %}"><i class="bi bi-database me-2"></i>Admin Django</a></li>
           {% endwith %}
         {% endif %}
+        {% with url_name=request.resolver_match.url_name %}
+        {% if user.role == "RH" %}
+          <li class="nav-item small text-uppercase text-white-50 mt-2 mb-1">Ressources humaines</li>
+          <li><a class="nav-link text-white {% if 'employee' in url_name or 'contract' in url_name or 'document' in url_name %}active{% endif %}" href="{% url 'organization:employee_list' %}"><i class="bi bi-people me-2"></i>Employés</a></li>
+          <li><a class="nav-link text-white {% if 'department' in url_name %}active{% endif %}" href="{% url 'organization:department_list' %}"><i class="bi bi-diagram-3 me-2"></i>Départements</a></li>
+        {% endif %}
+        {% if user.employee_profile %}
+          <li class="nav-item small text-uppercase text-white-50 mt-2 mb-1">Mon espace</li>
+          <li><a class="nav-link text-white {% if 'my_profile' in url_name %}active{% endif %}" href="{% url 'organization:my_profile' %}"><i class="bi bi-person-badge me-2"></i>Mon profil</a></li>
+        {% endif %}
+                <li><a class="nav-link text-white {% if url_name == 'password_change' %}active{% endif %}" href="{% url 'password_change' %}"><i class="bi bi-key me-2"></i>Mot de passe</a></li>
+                        <li><a class="nav-link text-white {% if url_name == 'org_chart' %}active{% endif %}" href="{% url 'organization:org_chart' %}"><i class="bi bi-diagram-2 me-2"></i>Organigramme</a></li>
+        {% endwith %}
         {% comment %}
           Les autres modules ajoutent ici leurs liens selon le rôle :
           {% if user.role == "EMPLOYE" %} … {% endif %}

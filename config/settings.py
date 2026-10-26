@@ -38,6 +38,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    # Bibliothèques tierces
+    "simple_history",
     # Applications du projet
     "accounts",
     "organization",
@@ -53,6 +55,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "simple_history.middleware.HistoryRequestMiddleware",  # historique : qui a modifié
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -133,6 +136,14 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Fichiers téléversés (documents des employés) : jamais servis publiquement,
+# le téléchargement passe par une vue qui contrôle les droits.
+MEDIA_ROOT = BASE_DIR / "media"
+
+# Limitation de débit sur la connexion (accounts.views.RateLimitedLoginView)
+LOGIN_MAX_ATTEMPTS = 5
+LOGIN_LOCKOUT_SECONDS = 300
 
 AUTH_USER_MODEL = "accounts.User"
 LOGIN_URL = "login"

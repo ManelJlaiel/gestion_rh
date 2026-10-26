@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{{ employee.full_name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="h3 mb-1">{{ employee.full_name }}
+      {% if employee.is_active %}<span class="badge text-bg-success fs-6">Actif</span>{% else %}<span class="badge text-bg-secondary fs-6">Inactif</span>{% endif %}
+    </h1>
+    <div class="text-muted">{{ employee.matricule }} · {{ employee.job_title }}</div>
+  </div>
+  <div class="d-flex gap-2">
+    {% if is_rh %}
+      <a class="btn btn-outline-primary" href="{% url 'organization:employee_edit' employee.pk %}"><i class="bi bi-pencil me-1"></i>Modifier</a>
+      {% if employee.is_active %}
+      <form method="post" action="{% url 'organization:employee_deactivate' employee.pk %}" onsubmit="return confirm('Désactiver cet employé ?');">{% csrf_token %}
+        <button class="btn btn-outline-danger"><i class="bi bi-person-x me-1"></i>Désactiver</button>
+      </form>
+      {% endif %}
+    {% elif is_self %}
+      <a class="btn btn-outline-primary" href="{% url 'organization:my_profile_edit' %}"><i class="bi bi-pencil me-1"></i>Mettre à jour mes informations</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header">Informations</div>
+    <dl class="row mb-0 p-3">
+      <dt class="col-5">E-mail</dt><dd class="col-7">{{ employee.email|default:"—" }}</dd>
+      <dt class="col-5">Téléphone</dt><dd class="col-7">{{ employee.phone|default:"—" }}</dd>
+      <dt class="col-5">Adresse</dt><dd class="col-7">{{ employee.address|default:"—" }}</dd>
+      <dt class="col-5">Date de naissance</dt><dd class="col-7">{{ employee.birth_date|date:"d/m/Y"|default:"—" }}</dd>
+      <dt class="col-5">Compte</dt><dd class="col-7">{{ employee.user.username|default:"—" }}</dd>
+    </dl></div></div>
+  <div class="col-lg-6"><div class="card h-100"><div class="card-header">Poste</div>
+    <dl class="row mb-0 p-3">
+      <dt class="col-5">Département</dt><dd class="col-7">{{ employee.department|default:"—" }}</dd>
+      <dt class="col-5">Manager</dt><dd class="col-7">{% if employee.manager %}<a href="{% url 'organization:employee_detail' employee.manager.pk %}">{{ employee.manager.full_name }}</a>{% else %}—{% endif %}</dd>
+      <dt class="col-5">Date d'embauche</dt><dd class="col-7">{{ employee.hire_date|date:"d/m/Y" }}</dd>
+      <dt class="col-5">Type de contrat</dt><dd class="col-7">{{ employee.get_contract_type_display }}</dd>
+      {% if is_rh %}<dt class="col-5">Salaire de base</dt><dd class="col-7">{{ employee.base_salary }} DT</dd>{% endif %}
+      {% if employee.exit_date %}<dt class="col-5">Date de sortie</dt><dd class="col-7">{{ employee.exit_date|date:"d/m/Y" }}</dd>{% endif %}
+    </dl></div></div>
+
+  {% if is_rh %}
+  <div class="col-12"><div class="card"><div class="card-header d-flex justify-content-between align-items-center">Contrats
+    <a class="btn btn-sm btn-primary" href="{% url 'organization:contract_create' employee.pk %}"><i class="bi bi-plus-lg"></i> Ajouter</a></div>
+    <div class="table-responsive"><table class="table mb-0 align-middle">
+      <thead class="table-light"><tr><th>Type</th><th>Début</th><th>Fin</th><th>Salaire</th><th>Statut</th><th></th></tr></thead>
+      <tbody>{% for c in contracts %}
+        <tr><td>{{ c.get_contract_type_display }}</td><td>{{ c.start_date|date:"d/m/Y" }}</td><td>{{ c.end_date|date:"d/m/Y"|default:"—" }}</td><td>{{ c.salary }} DT</td><td>{{ c.get_status_display }}</td>
+        <td class="text-end"><a class="btn btn-sm btn-outline-secondary" href="{% url 'organization:contract_edit' c.pk %}">Modifier</a></td></tr>
+      {% empty %}<tr><td colspan="6" class="text-center text-muted py-3">Aucun contrat.</td></tr>{% endfor %}</tbody>
+    </table></div></div></div>
+  {% endif %}
+
+  {% if documents != None %}
+  <div class="col-12"><div class="card"><div class="card-header d-flex justify-content-between align-items-center">Documents
+    {% if is_rh %}<a class="btn btn-sm btn-primary" href="{% url 'organization:document_upload' employee.pk %}"><i class="bi bi-upload"></i> Ajouter</a>{% endif %}</div>
+    <div class="table-responsive"><table class="table mb-0 align-middle">
+      <thead class="table-light"><tr><th>Titre</th><th>Type</th><th>Ajouté le</th><th></th></tr></thead>
+      <tbody>{% for d in documents %}
+        <tr><td>{{ d.title }}</td><td>{{ d.get_doc_type_display }}</td><td>{{ d.uploaded_at|date:"d/m/Y" }}</td>
+        <td class="text-end d-flex gap-2 justify-content-end">
+          <a class="btn btn-sm btn-outline-primary" href="{% url 'organization:document_download' d.pk %}"><i class="bi bi-download"></i></a>
+          {% if is_rh %}<form method="post" action="{% url 'organization:document_delete' d.pk %}" onsubmit="return confirm('Supprimer ce document ?');">{% csrf_token %}<button class="btn btn-sm btn-outline-danger" aria-label="Supprimer"><i class="bi bi-trash"></i></button></form>{% endif %}
+        </td></tr>
+      {% empty %}<tr><td colspan="4" class="text-center text-muted py-3">Aucun document.</td></tr>{% endfor %}</tbody>
+    </table></div></div></div>
+  {% endif %}
+
+  {% if is_rh %}
+  <div class="col-12"><div class="card"><div class="card-header">Historique des changements (poste, salaire…)</div>
+    <div class="table-responsive"><table class="table table-sm mb-0">
+      <thead class="table-light"><tr><th>Date</th><th>Par</th><th>Opération</th><th>Poste</th><th>Salaire</th></tr></thead>
+      <tbody>{% for h in history %}
+        <tr><td>{{ h.history_date|date:"d/m/Y H:i" }}</td><td>{{ h.history_user|default:"—" }}</td>
+        <td>{% if h.history_type == "+" %}Création{% elif h.history_type == "~" %}Modification{% else %}Suppression{% endif %}</td>
+        <td>{{ h.job_title }}</td><td>{{ h.base_salary }} DT</td></tr>
+      {% endfor %}</tbody>
+    </table></div></div></div>
+  {% endif %}
+</div>
+{% endblock %}

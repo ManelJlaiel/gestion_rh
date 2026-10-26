@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Organigramme{% endblock %}
+{% block content %}
+<h1 class="h3 mb-3">Organigramme</h1>
+<p class="text-muted">Hiérarchie des employés actifs (selon le manager de chacun).{% if me_id %} Votre poste est surligné.{% endif %}</p>
+<div class="card"><div class="card-body">
+  <ul class="org-tree list-unstyled mb-0" id="org-tree"><li class="text-muted">Chargement…</li></ul>
+</div></div>
+{{ me_id|json_script:"me-id" }}
+<style>
+  .org-tree ul { list-style: none; margin: .25rem 0 .25rem .75rem; padding-left: 1rem; border-left: 2px solid var(--bs-border-color); }
+  .org-tree .node { display: inline-block; padding: .35rem .6rem; margin: .2rem 0; border: 1px solid var(--bs-border-color); border-radius: .5rem; background: var(--bs-body-bg); }
+  .org-tree .node small { display: block; color: var(--bs-secondary-color); }
+  .org-tree .node.me { border-color: var(--bs-primary); background: var(--bs-primary-bg-subtle); }
+</style>
+{% endblock %}
+{% block scripts %}
+<script>
+  const meId = JSON.parse(document.getElementById("me-id").textContent);
+  function render(node) {
+    const li = document.createElement("li");
+    const box = document.createElement("div");
+    box.className = "node" + (node.id === meId ? " me" : "");
+    const name = document.createElement("strong");
+    name.textContent = node.name;
+    const sub = document.createElement("small");
+    sub.textContent = [node.title, node.department].filter(Boolean).join(" · ");
+    box.append(name, sub);
+    li.appendChild(box);
+    if (node.children.length) {
+      const ul = document.createElement("ul");
+      node.children.forEach(c => ul.appendChild(render(c)));
+      li.appendChild(ul);
+    }
+    return li;
+  }
+  fetch("{% url 'organization:org_chart_data' %}", {credentials: "same-origin"})
+    .then(r => r.json())
+    .then(data => {
+      const root = document.getElementById("org-tree");
+      root.replaceChildren();
+      if (!data.children.length) { root.innerHTML = '<li class="text-muted">Aucun employé actif.</li>'; return; }
+      data.children.forEach(c => root.appendChild(render(c)));
+    })
+    .catch(() => { document.getElementById("org-tree").innerHTML = '<li class="text-danger">Impossible de charger l\'organigramme.</li>'; });
+</script>
+{% endblock %}
