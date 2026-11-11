@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+{% block title %}Pointage & Congés{% endblock %}
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+  <div>
+    <h1 class="h3 mb-1">Pointage & Congés</h1>
+    <div class="text-muted small">Suivi des présences, absences et congés — {{ selected_date|date:"l d F Y" }}</div>
+  </div>
+  <div class="d-flex gap-2">
+    {% if user.is_admin_role or user.role == "RH" %}
+    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addLeaveModal">
+      <i class="bi bi-plus-lg me-1"></i>Poser un congé
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Filtres & navigation par date -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body py-2 px-3">
+    <form method="get">
+      <div class="d-flex align-items-center gap-2 flex-nowrap overflow-auto">
+        <!-- Date -->
+        <div class="d-flex align-items-center gap-2 flex-shrink-0">
+          <label class="form-label mb-0 small text-secondary fw-semibold text-nowrap">Date :</label>
+          <input type="date" name="date" class="form-control form-control-sm" style="width:145px"
+                 value="{{ selected_date|date:'Y-m-d' }}" onchange="this.form.submit()">
+        </div>
+        {% if not is_today %}
+        <a href="{% url 'attendance:dashboard' %}" class="btn btn-sm btn-outline-secondary flex-shrink-0">Aujourd'hui</a>
+        {% endif %}
+        <!-- Rôle -->
+        <select name="role" class="form-select form-select-sm flex-shrink-0" style="width:155px" onchange="this.form.submit()">
+          <option value="">— Rôle —</option>
+          {% for val, label in roles %}
+          {% if val != 'ADMIN' and val != 'RH' %}
+          <option value="{{ val }}" {% if selected_role == val %}selected{% endif %}>{{ label }}</option>
+          {% endif %}
+          {% endfor %}
+        </select>
+        <!-- Département -->
+        <select name="department" class="form-select form-select-sm flex-shrink-0" style="width:185px" onchange="this.form.submit()">
+          <option value="">— Département —</option>
+          {% for d in departments %}
+          <option value="{{ d.id }}" {% if selected_dept == d.id|stringformat:"s" %}selected{% endif %}>{{ d.name }}</option>
+          {% endfor %}
+        </select>
+        <!-- Recherche -->
+        <div class="input-group input-group-sm flex-shrink-0" style="width:185px">
+          <input type="text" name="q" class="form-control" placeholder="Rechercher…" value="{{ q }}">
+          <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Résumé rapide du jour -->
+<div class="d-flex gap-3 mb-4 flex-wrap">
+  <div class="d-flex align-items-center gap-2 px-3 py-2 rounded bg-success bg-opacity-10 border border-success border-opacity-25">
+    <i class="bi bi-check-circle-fill text-success"></i>
+    <span class="fw-semibold text-success">{{ present_count }}</span>
+    <span class="text-secondary small">Présents</span>
+  </div>
+  <div class="d-flex align-items-center gap-2 px-3 py-2 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25">
+    <i class="bi bi-clock-history text-warning"></i>
+    <span class="fw-semibold text-warning">{{ late_count }}</span>
+    <span class="text-secondary small">En retard</span>
+  </div>
+  <div class="d-flex align-items-center gap-2 px-3 py-2 rounded bg-danger bg-opacity-10 border border-danger border-opacity-25">
+    <i class="bi bi-x-circle-fill text-danger"></i>
+    <span class="fw-semibold text-danger">{{ absent_count }}</span>
+    <span class="text-secondary small">Absents</span>
+  </div>
+  <div class="d-flex align-items-center gap-2 px-3 py-2 rounded bg-primary bg-opacity-10 border border-primary border-opacity-25">
+    <i class="bi bi-airplane-fill text-primary"></i>
+    <span class="fw-semibold text-primary">{{ on_leave_count }}</span>
+    <span class="text-secondary small">En congé</span>
+  </div>
+  <div class="d-flex align-items-center gap-2 px-3 py-2 rounded bg-light border">
+    <i class="bi bi-people text-secondary"></i>
+    <span class="fw-semibold">{{ total_employees }}</span>
+    <span class="text-secondary small">Total</span>
+  </div>
+</div>
+
+<!-- Pointage rapide de l'utilisateur connecté — uniquement pour le RH -->
+{% if user.role == "RH" and my_employee and is_today %}
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <div class="rounded-circle bg-primary bg-opacity-10 p-2">
+        <i class="bi bi-person-badge fs-5 text-primary"></i>
+      </div>
+      <div>
+        <div class="fw-semibold">Mon pointage — {{ my_employee.full_name }}</div>
+        <div class="small text-muted">
+          {% if my_today_attendance %}
+            {% if my_today_attendance.status == "PRESENT" %}
+              <span class="badge text-bg-success">Présent{% if my_today_attendance.check_in_time %} · {{ my_today_attendance.check_in_time|time:"H:i" }}{% endif %}</span>
+            {% elif my_today_attendance.status == "LATE" %}
+              <span class="badge text-bg-warning text-dark">En retard{% if my_today_attendance.check_in_time %} · {{ my_today_attendance.check_in_time|time:"H:i" }}{% endif %}</span>
+            {% else %}
+              <span class="badge text-bg-danger">Absent</span>
+            {% endif %}
+          {% else %}
+            <span class="text-muted">Pas encore pointé aujourd'hui</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    <form method="post" action="{% url 'attendance:mark' %}" class="d-flex gap-2">
+      {% csrf_token %}
+      <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+      <input type="hidden" name="employee_id" value="{{ my_employee.id }}">
+      {% if my_today_attendance %}
+        <span class="text-muted small fst-italic my-auto">Déjà pointé</span>
+      {% else %}
+        <button type="submit" name="status" value="PRESENT" class="btn btn-primary btn-sm">
+          <i class="bi bi-box-arrow-in-right me-1"></i>Pointer
+        </button>
+      {% endif %}
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- Tableau principal -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+    <span class="fw-semibold text-secondary small text-uppercase">
+      <i class="bi bi-list-check me-2"></i>Situation du {{ selected_date|date:"d/m/Y" }}
+    </span>
+    <span class="badge text-bg-secondary rounded-pill">{{ rows|length }} employé{{ rows|length|pluralize }}</span>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" style="font-size:.9rem">
+      <thead class="table-light border-bottom">
+        <tr>
+          <th>Employé</th>
+          <th style="width:105px">Rôle</th>
+          <th>Département</th>
+          <th class="text-center" style="width:140px">Congé</th>
+          <th class="text-center" style="width:130px">Pointage</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr {% if row.on_leave %}class="table-primary table-primary-subtle"{% endif %}>
+
+          <!-- Employé -->
+          <td>
+            <a href="{% url 'organization:employee_detail' row.employee.pk %}" class="fw-semibold text-dark text-decoration-none d-block">
+              {{ row.employee.full_name }}
+            </a>
+            <span class="small text-muted">{{ row.employee.matricule }}</span>
+          </td>
+
+          <!-- Rôle -->
+          <td>
+            {% if row.role == 'MANAGER' %}
+              <span class="badge text-bg-warning text-dark"><i class="bi bi-person-gear me-1"></i>Manager</span>
+            {% elif row.role == 'EMPLOYE' %}
+              <span class="badge text-bg-secondary"><i class="bi bi-person me-1"></i>Employé</span>
+            {% elif row.role %}
+              <span class="badge text-bg-light border">{{ row.role_display }}</span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+
+          <!-- Département -->
+          <td class="text-muted small">{{ row.employee.department|default:"—" }}</td>
+
+          <!-- Congé (annuel / aujourd'hui) -->
+          <td style="min-width:160px">
+            {% if row.on_leave %}
+              <div class="badge text-bg-primary mb-1 d-inline-block text-truncate" style="max-width:180px" title="{{ row.leave.leave_type.name }} ({{ row.leave.days_count }} j)">
+                ✈ {{ row.leave.leave_type.name }}{% if row.leave.days_count %} ({{ row.leave.days_count }} j){% endif %}
+              </div>
+            {% endif %}
+            {% if row.annual_limit > 0 %}
+              {% widthratio row.days_taken row.annual_limit 100 as pct %}
+              <div class="progress mb-1" style="height:6px" title="{{ row.days_taken }} j pris sur {{ row.annual_limit }} j autorisés cette année (reste {{ row.remaining_days }} j)">
+                <div class="progress-bar {% if row.is_limit_reached %}bg-danger{% elif pct >= 80 %}bg-warning{% else %}bg-success{% endif %}"
+                     style="width:{% if pct > 100 %}100{% else %}{{ pct }}{% endif %}%"></div>
+              </div>
+            {% endif %}
+            <div class="small d-flex justify-content-between align-items-center">
+              <span>
+                <strong class="{% if row.is_limit_reached %}text-danger{% elif row.days_taken > 0 %}text-dark{% else %}text-muted{% endif %}">
+                  {{ row.days_taken }} j
+                </strong>
+                <span class="text-muted">/ {{ row.annual_limit }} j</span>
+              </span>
+              {% if row.is_limit_reached %}
+                <span class="badge text-bg-danger" style="font-size:.7rem">Quota atteint</span>
+              {% else %}
+                <span class="text-muted" style="font-size:.75rem">reste {{ row.remaining_days }} j</span>
+              {% endif %}
+            </div>
+          </td>
+
+          <!-- Pointage -->
+          <td class="text-center">
+            {% if row.attendance %}
+              {% if row.attendance.status == "PRESENT" %}
+                <span class="badge text-bg-success">Présent</span>
+                {% if row.attendance.check_in_time %}<div class="text-muted" style="font-size:.78rem">{{ row.attendance.check_in_time|time:"H:i" }}</div>{% endif %}
+              {% elif row.attendance.status == "LATE" %}
+                <span class="badge text-bg-warning text-dark">Retard</span>
+                {% if row.attendance.check_in_time %}<div class="text-muted" style="font-size:.78rem">{{ row.attendance.check_in_time|time:"H:i" }}</div>{% endif %}
+              {% elif row.attendance.status == "ABSENT" %}
+                <span class="badge text-bg-danger">Absent</span>
+              {% endif %}
+            {% elif row.on_leave %}
+              <span class="badge text-bg-primary">Congé</span>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-muted py-5">
+            <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary opacity-50"></i>
+            Aucun employé trouvé.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal Poser un Congé -->
+<div class="modal fade" id="addLeaveModal" tabindex="-1" aria-labelledby="addLeaveLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow">
+      <form method="post" action="{% url 'attendance:add_leave' %}">
+        {% csrf_token %}
+        <div class="modal-header border-0 pb-0">
+          <h5 class="modal-title fw-semibold" id="addLeaveLabel">
+            <i class="bi bi-calendar-plus me-2 text-primary"></i>Enregistrer un congé
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Employé <span class="text-danger">*</span></label>
+            <select name="employee_id" class="form-select" required>
+              <option value="">— Choisir l'employé —</option>
+              {% for row in rows %}
+              <option value="{{ row.employee.id }}">{{ row.employee.full_name }} ({{ row.employee.matricule }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small fw-semibold">Type de congé <span class="text-danger">*</span></label>
+            <select name="leave_type_id" class="form-select" required>
+              {% for lt in leave_types %}
+              <option value="{{ lt.id }}">{{ lt.name }} ({{ lt.annual_days }} j/an)</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="row g-3 mb-2">
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Date début <span class="text-danger">*</span></label>
+              <input type="date" name="start_date" id="leaveStartDate" class="form-control" value="{{ selected_date|date:'Y-m-d' }}" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label small fw-semibold">Date fin <span class="text-danger">*</span></label>
+              <input type="date" name="end_date" id="leaveEndDate" class="form-control" value="{{ selected_date|date:'Y-m-d' }}" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <span class="badge text-bg-light border text-primary" id="leaveDurationHint">
+              <i class="bi bi-calendar-range me-1"></i>Durée calculée : 1 jour
+            </span>
+          </div>
+          <div>
+            <label class="form-label small fw-semibold">Motif</label>
+            <textarea name="reason" rows="2" class="form-control" placeholder="Justification ou remarque…"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer border-0 pt-0">
+          <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-1"></i>Enregistrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    const sInput = document.getElementById('leaveStartDate');
+    const eInput = document.getElementById('leaveEndDate');
+    const hint = document.getElementById('leaveDurationHint');
+    if (!sInput || !eInput || !hint) return;
+
+    function updateDuration() {
+      if (!sInput.value || !eInput.value) return;
+      const d1 = new Date(sInput.value);
+      const d2 = new Date(eInput.value);
+      const diff = Math.round((d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+      if (diff > 0) {
+        hint.innerHTML = `<i class="bi bi-calendar-range me-1"></i>Durée calculée : ${diff} jour${diff > 1 ? 's' : ''}`;
+        hint.className = 'badge text-bg-light border text-primary';
+      } else {
+        hint.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>Date de fin invalide`;
+        hint.className = 'badge text-bg-danger';
+      }
+    }
+    sInput.addEventListener('change', updateDuration);
+    eInput.addEventListener('change', updateDuration);
+    updateDuration();
+  })();
+</script>
+{% endblock %}

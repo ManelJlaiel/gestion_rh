@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     "accounts",
     "organization",
     "leaves",
+    "attendance",
     "payroll",
     "audit",
     "administration",
@@ -115,6 +116,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
+]
+
+AUTHENTICATION_BACKENDS = [
+    "accounts.backends.EmailOrUsernameModelBackend",
+    "django.contrib.auth.backends.ModelBackend",
 ]
 
 

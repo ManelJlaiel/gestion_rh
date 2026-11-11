@@ -4,7 +4,7 @@
 <h1 class="h3 mb-4">Tableau de bord administrateur</h1>
 <div class="row g-3 mb-4">
   <div class="col-6 col-xl-3"><div class="card stat-card h-100"><div class="card-body">
-    <div class="text-muted small">Comptes</div><div class="stat-value">{{ total_users }}</div>
+    <div class="text-muted small">Employés</div><div class="stat-value">{{ total_users }}</div>
     <div class="small text-muted">dont {{ inactive_users }} inactif{{ inactive_users|pluralize }}</div>
   </div></div></div>
   <div class="col-6 col-xl-3"><div class="card stat-card h-100"><div class="card-body">
@@ -20,7 +20,7 @@
 <div class="row g-3">
   <div class="col-lg-4">
     <div class="card h-100">
-      <div class="card-header bg-white">Comptes par rôle</div>
+      <div class="card-header bg-white">Employés par rôle</div>
       <ul class="list-group list-group-flush">
         {% for label, n in roles %}
         <li class="list-group-item d-flex justify-content-between">{{ label }}<span class="badge text-bg-secondary">{{ n }}</span></li>

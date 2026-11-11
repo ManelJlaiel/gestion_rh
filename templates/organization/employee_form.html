@@ -1,0 +1,240 @@
+{% extends "base.html" %}
+{% block title %}{% if form.instance.pk %}Modifier {{ form.instance.full_name }}{% else %}Nouvel employé{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-0" style="max-width: 950px;">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{% url 'organization:employee_list' %}" class="text-decoration-none">Employés</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{% if form.instance.pk %}Modifier {{ form.instance.full_name }}{% else %}Nouveau dossier employé{% endif %}</li>
+    </ol>
+  </nav>
+
+  <!-- En-tête -->
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <div class="rounded-3 bg-primary bg-opacity-10 p-3 text-primary">
+      <i class="bi {% if form.instance.pk %}bi-person-gear{% else %}bi-person-plus{% endif %} fs-3"></i>
+    </div>
+    <div>
+      <h1 class="h3 mb-1 fw-bold text-dark">
+        {% if form.instance.pk %}Modifier la fiche de {{ form.instance.full_name }}{% else %}Créer une fiche employé{% endif %}
+      </h1>
+      <p class="text-muted small mb-0">
+        Renseignez l'ensemble des informations administratives, contractuelles et organisationnelles.
+      </p>
+    </div>
+  </div>
+
+  <!-- Formulaire principal -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-4 p-md-5">
+      <form method="post" novalidate id="employeeDetailsForm">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2 mb-4 d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <div>{{ form.non_field_errors|join:" " }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Section 1 : État civil & Contact -->
+        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom text-uppercase text-secondary fw-semibold small">
+          <i class="bi bi-person-vcard text-primary"></i>
+          <span>1. État civil & Coordonnées</span>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.first_name.id_for_label }}">
+              {{ form.first_name.label }} <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person"></i></span>
+              {{ form.first_name }}
+            </div>
+            {% for e in form.first_name.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="col-md-6">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.last_name.id_for_label }}">
+              {{ form.last_name.label }} <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person"></i></span>
+              {{ form.last_name }}
+            </div>
+            {% for e in form.last_name.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.birth_date.id_for_label }}">
+              {{ form.birth_date.label }}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-event"></i></span>
+              {{ form.birth_date }}
+            </div>
+            {% for e in form.birth_date.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.email.id_for_label }}">
+              {{ form.email.label }} <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-envelope"></i></span>
+              {{ form.email }}
+            </div>
+            {% for e in form.email.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.phone.id_for_label }}">
+              {{ form.phone.label }}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-telephone"></i></span>
+              {{ form.phone }}
+            </div>
+            {% for e in form.phone.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="col-md-12">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.address.id_for_label }}">
+              {{ form.address.label }}
+            </label>
+            {{ form.address }}
+            {% for e in form.address.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <!-- Section 2 : Poste & Organisation -->
+        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom text-uppercase text-secondary fw-semibold small mt-4">
+          <i class="bi bi-briefcase text-primary"></i>
+          <span>2. Poste & Rattachement hiérarchique</span>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.job_title.id_for_label }}">
+              {{ form.job_title.label }}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-badge-ad"></i></span>
+              {{ form.job_title }}
+            </div>
+            {% for e in form.job_title.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.department.id_for_label }}">
+              {{ form.department.label }}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-diagram-3"></i></span>
+              {{ form.department }}
+            </div>
+            {% for e in form.department.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.manager.id_for_label }}">
+              {{ form.manager.label }}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person-check"></i></span>
+              {{ form.manager }}
+            </div>
+            {% for e in form.manager.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <!-- Section 3 : Contrat & Rémunération -->
+        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom text-uppercase text-secondary fw-semibold small mt-4">
+          <i class="bi bi-file-earmark-text text-primary"></i>
+          <span>3. Contrat & Rémunération</span>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.contract_type.id_for_label }}">
+              {{ form.contract_type.label }}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-file-text"></i></span>
+              {{ form.contract_type }}
+            </div>
+            {% for e in form.contract_type.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.hire_date.id_for_label }}">
+              {{ form.hire_date.label }}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-plus"></i></span>
+              {{ form.hire_date }}
+            </div>
+            {% for e in form.hire_date.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.base_salary.id_for_label }}">
+              {{ form.base_salary.label }} (DT)
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-cash-stack"></i></span>
+              {{ form.base_salary }}
+            </div>
+            {% for e in form.base_salary.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.exit_date.id_for_label }}">
+              {{ form.exit_date.label }}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-calendar-x"></i></span>
+              {{ form.exit_date }}
+            </div>
+            {% for e in form.exit_date.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="col-md-4">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.user.id_for_label }}">
+              {{ form.user.label }} (Compte lié)
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person-lock"></i></span>
+              {{ form.user }}
+            </div>
+            {% for e in form.user.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+
+          <div class="col-md-4 d-flex align-items-center pt-md-4">
+            <div class="form-check form-switch">
+              {{ form.is_active }}
+              <label class="form-check-label fw-semibold small ms-2" for="{{ form.is_active.id_for_label }}">
+                {{ form.is_active.label }}
+              </label>
+            </div>
+            {% for e in form.is_active.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+          </div>
+        </div>
+
+        <!-- Boutons d'action -->
+        <div class="d-flex justify-content-between align-items-center pt-4 border-top mt-4 flex-wrap gap-2">
+          <a class="btn btn-outline-secondary px-4" href="{% url 'organization:employee_list' %}">
+            <i class="bi bi-arrow-left me-1"></i>Annuler
+          </a>
+          <button type="submit" class="btn btn-primary px-4 shadow-sm">
+            <i class="bi bi-check-lg me-1"></i>{% if form.instance.pk %}Enregistrer les modifications{% else %}Créer la fiche employé{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

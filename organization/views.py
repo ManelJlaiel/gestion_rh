@@ -129,7 +129,7 @@ def employee_create(request):
             return redirect("organization:employee_detail", pk=employee.pk)
     else:
         form = EmployeeForm()
-    return render(request, "organization/form.html", {"form": form, "title": "Nouvel employé", "cancel_url": "organization:employee_list"})
+    return render(request, "organization/employee_form.html", {"form": form, "title": "Nouvel employé", "cancel_url": "organization:employee_list"})
 
 
 @rh_only
@@ -151,7 +151,7 @@ def employee_edit(request, pk):
         form = EmployeeForm(instance=employee)
     return render(
         request,
-        "organization/form.html",
+        "organization/employee_form.html",
         {"form": form, "title": f"Modifier {employee.full_name}", "cancel_url": "organization:employee_detail", "cancel_arg": employee.pk},
     )
 
@@ -201,8 +201,21 @@ def employee_export_csv(request):
 def my_profile(request):
     employee = request.user.employee_profile
     if employee is None:
-        messages.info(request, "Aucune fiche employé n'est liée à votre compte.")
-        return redirect("home")
+        from decimal import Decimal
+        from django.utils import timezone
+        from organization.models import ContractType, Employee
+
+        employee = Employee.objects.create(
+            user=request.user,
+            first_name=request.user.first_name or request.user.username,
+            last_name=request.user.last_name or "",
+            email=request.user.email or f"{request.user.username}@demo.tn",
+            job_title="Responsable RH" if request.user.role == "RH" else request.user.get_role_display(),
+            hire_date=timezone.localdate(),
+            contract_type=ContractType.CDI,
+            base_salary=Decimal("0.000"),
+            is_active=request.user.is_active,
+        )
     return redirect("organization:employee_detail", pk=employee.pk)
 
 
@@ -245,7 +258,7 @@ def department_create(request):
             return redirect("organization:department_list")
     else:
         form = DepartmentForm()
-    return render(request, "organization/form.html", {"form": form, "title": "Nouveau département", "cancel_url": "organization:department_list"})
+    return render(request, "organization/department_form.html", {"form": form, "title": "Nouveau département", "cancel_url": "organization:department_list"})
 
 
 @rh_or_admin
@@ -260,7 +273,7 @@ def department_edit(request, pk):
             return redirect("organization:department_list")
     else:
         form = DepartmentForm(instance=department)
-    return render(request, "organization/form.html", {"form": form, "title": f"Modifier {department}", "cancel_url": "organization:department_list"})
+    return render(request, "organization/department_form.html", {"form": form, "title": f"Modifier {department}", "cancel_url": "organization:department_list"})
 
 
 @rh_or_admin

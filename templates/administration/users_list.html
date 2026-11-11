@@ -1,33 +1,104 @@
 {% extends "base.html" %}
-{% block title %}Comptes{% endblock %}
+{% block title %}Employés{% endblock %}
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h1 class="h3 mb-0">Comptes utilisateurs</h1>
-  <a class="btn btn-primary" href="{% url 'administration:user_add' %}"><i class="bi bi-person-plus me-1"></i>Nouveau compte</a>
+  <h1 class="h3 mb-0">Employés</h1>
+  <a class="btn btn-primary" href="{% url 'administration:user_add' %}"><i class="bi bi-person-plus me-1"></i>Nouvel employé</a>
 </div>
-<form class="row g-2 mb-3" method="get">
-  <div class="col-md-5"><input class="form-control" name="q" value="{{ q }}" placeholder="Rechercher (nom, identifiant, e-mail)"></div>
-  <div class="col-6 col-md-3"><select class="form-select" name="role">
-    <option value="">Tous les rôles</option>
-    {% for value, label in roles %}<option value="{{ value }}" {% if value == role %}selected{% endif %}>{{ label }}</option>{% endfor %}
-  </select></div>
-  <div class="col-6 col-md-2"><select class="form-select" name="status">
-    <option value="">Tous</option>
-    <option value="actif" {% if status == "actif" %}selected{% endif %}>Actifs</option>
-    <option value="inactif" {% if status == "inactif" %}selected{% endif %}>Inactifs</option>
-  </select></div>
-  <div class="col-md-2 d-grid"><button class="btn btn-outline-primary"><i class="bi bi-funnel me-1"></i>Filtrer</button></div>
-</form>
-<div class="card">
-  <div class="table-responsive">
-    <table class="table table-hover mb-0">
-      <thead class="table-light"><tr><th>Identifiant</th><th>Nom</th><th>E-mail</th><th>Rôle</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
-      <tbody>
-        {% for u in page %}{% include "administration/partials/user_row.html" %}
-        {% empty %}<tr><td colspan="6" class="text-center text-muted py-4">Aucun compte trouvé.</td></tr>{% endfor %}
-      </tbody>
-    </table>
+<form class="row g-2 mb-3" method="get" onsubmit="return false;">
+  <div class="col-md-5">
+    <div class="input-group">
+      <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
+      <input class="form-control" 
+             id="search-input"
+             name="q" 
+             value="{{ q }}" 
+             placeholder="Rechercher en temps réel (nom, CIN, e-mail)..."
+             autocomplete="off"
+             hx-get="{% url 'administration:users' %}"
+             hx-trigger="input changed delay:150ms, search"
+             hx-target="#user-table-container"
+             hx-include="[name='role'], [name='status']"
+             hx-indicator="#search-spinner">
+      <span class="input-group-text bg-white htmx-indicator" id="search-spinner" style="display:none;">
+        <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+      </span>
+    </div>
   </div>
+  <div class="col-6 col-md-3">
+    <select class="form-select" name="role"
+            hx-get="{% url 'administration:users' %}"
+            hx-trigger="change"
+            hx-target="#user-table-container"
+            hx-include="#search-input, [name='status']"
+            hx-indicator="#search-spinner">
+      <option value="">Tous les rôles</option>
+      {% for value, label in roles %}<option value="{{ value }}" {% if value == role %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </div>
+  <div class="col-6 col-md-2">
+    <select class="form-select" name="status"
+            hx-get="{% url 'administration:users' %}"
+            hx-trigger="change"
+            hx-target="#user-table-container"
+            hx-include="#search-input, [name='role']"
+            hx-indicator="#search-spinner">
+      <option value="">Tous les statuts</option>
+      <option value="actif" {% if status == "actif" %}selected{% endif %}>Actifs</option>
+      <option value="inactif" {% if status == "inactif" %}selected{% endif %}>Inactifs</option>
+    </select>
+  </div>
+  <div class="col-md-2 d-grid">
+    <button type="button" class="btn btn-outline-secondary" id="reset-filter-btn" title="Réinitialiser la recherche">
+      <i class="bi bi-x-circle me-1"></i>Effacer
+    </button>
+  </div>
+</form>
+
+<div id="user-table-container">
+  {% include "administration/partials/user_table.html" %}
 </div>
-{% include "administration/_pagination.html" %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const searchInput = document.getElementById("search-input");
+  const roleSelect = document.querySelector("select[name='role']");
+  const statusSelect = document.querySelector("select[name='status']");
+  const resetBtn = document.getElementById("reset-filter-btn");
+
+  // Instant 0ms client-side row filtering on keystroke
+  searchInput.addEventListener("input", function () {
+    const filter = this.value.toLowerCase().trim();
+    const rows = document.querySelectorAll("#user-table-body tr");
+    let matchCount = 0;
+    rows.forEach(function (row) {
+      if (row.querySelector("td[colspan]")) return;
+      const text = row.innerText.toLowerCase();
+      const match = text.includes(filter);
+      row.style.display = match ? "" : "none";
+      if (match) matchCount++;
+    });
+
+    const emptyRow = document.querySelector("#user-table-body tr td[colspan]");
+    if (emptyRow) {
+      emptyRow.parentElement.style.display = (matchCount === 0 && filter !== "") ? "" : "none";
+    }
+  });
+
+  // Clear button to reset input and filters
+  if (resetBtn) {
+    resetBtn.addEventListener("click", function () {
+      searchInput.value = "";
+      roleSelect.value = "";
+      statusSelect.value = "";
+      htmx.ajax("GET", "{% url 'administration:users' %}", {
+        target: "#user-table-container",
+        swap: "innerHTML"
+      });
+    });
+  }
+});
+</script>
 {% endblock %}

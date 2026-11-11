@@ -2,11 +2,11 @@
 {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>{% endif %}
 {% for field in form %}
   {% if field.field.widget.input_type == "checkbox" %}
-  <div class="form-check mb-3">
+  <div class="form-check mb-3" id="div_id_{{ field.name }}">
     {{ field }}<label class="form-check-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
   </div>
   {% else %}
-  <div class="mb-3">
+  <div class="mb-3" id="div_id_{{ field.name }}">
     <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
     {{ field }}
     {% for e in field.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}

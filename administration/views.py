@@ -3,6 +3,7 @@ from datetime import timedelta
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db.models import Count, Q
 from django.http import Http404
@@ -27,6 +28,7 @@ from .forms import (
 
 User = get_user_model()
 admin_only = role_required(User.Role.ADMIN)
+admin_or_rh = role_required(User.Role.ADMIN, User.Role.RH)
 
 # Une entrée par onglet de la page Paramètres : modèle, formulaire, colonnes affichées.
 SETTINGS_SECTIONS = {
@@ -98,8 +100,10 @@ def dashboard(request):
 # --------------------------------------------------------------------------- #
 # Paramètres (CRUD générique pour les 4 sections)
 # --------------------------------------------------------------------------- #
-@admin_only
+@admin_or_rh
 def settings_view(request, section="types-conges"):
+    if not request.user.is_admin_role and section not in ("types-conges", "jours-feries"):
+        return redirect("administration:settings", section="types-conges")
     conf = _section(section)
     objects = conf["model"].objects.all()
     rows = [(obj, [_value(obj, attr) for attr, _ in conf["columns"]]) for obj in objects]
@@ -115,8 +119,10 @@ def _value(obj, attr):
     return value() if callable(value) else value
 
 
-@admin_only
+@admin_or_rh
 def settings_form(request, section, pk=None):
+    if not request.user.is_admin_role and section not in ("types-conges", "jours-feries"):
+        raise PermissionDenied
     conf = _section(section)
     instance = get_object_or_404(conf["model"], pk=pk) if pk else None
     form = conf["form"](request.POST or None, instance=instance)
@@ -133,9 +139,11 @@ def settings_form(request, section, pk=None):
     )
 
 
-@admin_only
+@admin_or_rh
 @require_POST
 def settings_delete(request, section, pk):
+    if not request.user.is_admin_role and section not in ("types-conges", "jours-feries"):
+        raise PermissionDenied
     conf = _section(section)
     obj = get_object_or_404(conf["model"], pk=pk)
     name = str(obj)
@@ -146,11 +154,11 @@ def settings_delete(request, section, pk):
 
 
 # --------------------------------------------------------------------------- #
-# Comptes utilisateurs
+# Employés (comptes)
 # --------------------------------------------------------------------------- #
-@admin_only
+@admin_or_rh
 def users_list(request):
-    users = User.objects.order_by("username")
+    users = User.objects.select_related("employee__department").order_by("username")
     q = request.GET.get("q", "").strip()
     role = request.GET.get("role", "")
     status = request.GET.get("status", "")
@@ -165,6 +173,8 @@ def users_list(request):
     elif status == "inactif":
         users = users.filter(is_active=False)
     page = Paginator(users, 15).get_page(request.GET.get("page"))
+    if request.headers.get("HX-Request"):
+        return render(request, "administration/partials/user_table.html", {"page": page})
     return render(
         request,
         "administration/users_list.html",
@@ -172,18 +182,18 @@ def users_list(request):
     )
 
 
-@admin_only
+@admin_or_rh
 def user_create(request):
     form = UserCreateForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.save()
         log_action(request.user, AuditLog.Action.CREATE, user, f"Compte créé : {user.username} ({user.role})")
-        messages.success(request, f"Le compte « {user.username} » a été créé.")
+        messages.success(request, f"L'employé « {user.username} » a été créé.")
         return redirect("administration:users")
     return render(request, "administration/user_form.html", {"form": form, "creating": True})
 
 
-@admin_only
+@admin_or_rh
 def user_edit(request, pk):
     target = get_object_or_404(User, pk=pk)
     old_role = target.role
@@ -197,33 +207,38 @@ def user_edit(request, pk):
             if old_role != user.role:
                 detail += f" (rôle {old_role} → {user.role})"
             log_action(request.user, AuditLog.Action.UPDATE, user, detail)
-            messages.success(request, f"Le compte « {user.username} » a été mis à jour.")
+            messages.success(request, f"L'employé « {user.username} » a été mis à jour.")
             return redirect("administration:users")
     return render(request, "administration/user_form.html", {"form": form, "target": target, "creating": False})
 
 
-@admin_only
+@admin_or_rh
 @require_POST
 def user_toggle_active(request, pk):
     target = get_object_or_404(User, pk=pk)
     if target == request.user:
         messages.error(request, "Vous ne pouvez pas désactiver votre propre compte.")
+    elif target.is_admin_role:
+        messages.error(request, "Le compte administrateur ne peut pas être désactivé.")
     else:
         target.is_active = not target.is_active
         target.save(update_fields=["is_active"])
         state = "réactivé" if target.is_active else "désactivé"
         log_action(request.user, AuditLog.Action.UPDATE, target, f"Compte {state} : {target.username}")
-        messages.success(request, f"Le compte « {target.username} » a été {state}.")
+        messages.success(request, f"L'employé « {target.username} » a été {state}.")
     if request.headers.get("HX-Request"):
         # Avec HTMX, on renvoie uniquement la ligne mise à jour.
         return render(request, "administration/partials/user_row.html", {"u": target})
     return redirect("administration:users")
 
 
-@admin_only
+@admin_or_rh
 @require_POST
 def user_reset_password(request, pk):
     target = get_object_or_404(User, pk=pk)
+    if target.is_admin_role:
+        messages.error(request, "Le mot de passe de l'administrateur ne peut pas être réinitialisé ici.")
+        return redirect("administration:users")
     temp_password = secrets.token_urlsafe(9)
     target.set_password(temp_password)
     target.save(update_fields=["password"])

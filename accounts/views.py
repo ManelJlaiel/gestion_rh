@@ -17,7 +17,7 @@ def home(request):
     if request.user.is_admin_role:
         return redirect("administration:dashboard")
     if request.user.is_rh:
-        return redirect("organization:employee_list")
+        return redirect("administration:users")
         # Espace Employé / Manager : résumé de la fiche, actions rapides, équipe du manager.
     # Les autres modules (congés, présences, paie) ajouteront leurs tuiles dans home.html.
     employee = request.user.employee_profile
@@ -74,7 +74,7 @@ class PasswordChangeView(auth_views.PasswordChangeView):
 
     form_class = StyledPasswordChangeForm
     template_name = "registration/password_change_form.html"
-    success_url = reverse_lazy("home")
+    success_url = reverse_lazy("organization:my_profile")
 
     def form_valid(self, form):
         response = super().form_valid(form)

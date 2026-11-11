@@ -1,0 +1,12 @@
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0" id="user-table">
+      <thead class="table-light"><tr><th>CIN</th><th>Nom</th><th>E-mail</th><th>Département</th><th>Rôle</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
+      <tbody id="user-table-body">
+        {% for u in page %}{% include "administration/partials/user_row.html" %}
+        {% empty %}<tr><td colspan="7" class="text-center text-muted py-4">Aucun employé trouvé.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "administration/_pagination.html" %}

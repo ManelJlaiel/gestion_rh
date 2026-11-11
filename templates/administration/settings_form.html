@@ -1,16 +1,32 @@
 {% extends "base.html" %}
 {% block title %}{{ conf.label }}{% endblock %}
 {% block content %}
-<h1 class="h3 mb-3">Paramètres</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h1 class="h3 mb-1 fw-bold text-dark">{% if user.is_admin_role %}Paramètres — {{ conf.label }}{% else %}{{ conf.label }}{% endif %}</h1>
+    <div class="text-muted small">Configuration des paramètres de l'application</div>
+  </div>
+</div>
+
 {% include "administration/_settings_tabs.html" %}
-<div class="card" style="max-width: 640px">
-  <div class="card-header bg-white">{% if instance %}Modifier « {{ instance }} »{% else %}Ajouter : {{ conf.label|lower }}{% endif %}</div>
-  <div class="card-body">
+
+<div class="card border-0 shadow-sm rounded-3 mt-4" style="max-width: 750px">
+  <div class="card-header bg-white border-bottom py-3 d-flex align-items-center gap-2">
+    <i class="bi {{ conf.icon|default:'bi-sliders' }} text-primary fs-5"></i>
+    <span class="fw-semibold text-dark">
+      {% if instance %}Modifier « {{ instance }} »{% else %}Ajouter un enregistrement ({{ conf.label|lower }}){% endif %}
+    </span>
+  </div>
+  <div class="card-body p-4 p-md-5">
     <form method="post" novalidate>
       {% include "administration/_form_fields.html" %}
-      <div class="d-flex gap-2">
-        <button class="btn btn-primary">Enregistrer</button>
-        <a class="btn btn-outline-secondary" href="{% url 'administration:settings' current %}">Annuler</a>
+      <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-4 flex-wrap gap-2">
+        <a class="btn btn-outline-secondary px-4" href="{% url 'administration:settings' current %}">
+          <i class="bi bi-arrow-left me-1"></i>Annuler
+        </a>
+        <button type="submit" class="btn btn-primary px-4 shadow-sm">
+          <i class="bi bi-check-lg me-1"></i>Enregistrer
+        </button>
       </div>
     </form>
   </div>

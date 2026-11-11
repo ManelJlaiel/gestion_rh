@@ -8,16 +8,21 @@
     </h1>
     <div class="text-muted">{{ employee.matricule }} · {{ employee.job_title }}</div>
   </div>
-  <div class="d-flex gap-2">
-    {% if is_rh %}
+  <div class="d-flex gap-2 flex-wrap">
+    {% if is_rh and not is_self %}
       <a class="btn btn-outline-primary" href="{% url 'organization:employee_edit' employee.pk %}"><i class="bi bi-pencil me-1"></i>Modifier</a>
       {% if employee.is_active %}
       <form method="post" action="{% url 'organization:employee_deactivate' employee.pk %}" onsubmit="return confirm('Désactiver cet employé ?');">{% csrf_token %}
         <button class="btn btn-outline-danger"><i class="bi bi-person-x me-1"></i>Désactiver</button>
       </form>
       {% endif %}
+    {% elif is_rh and is_self %}
+      <a class="btn btn-outline-primary" href="{% url 'organization:employee_edit' employee.pk %}"><i class="bi bi-pencil me-1"></i>Modifier ma fiche</a>
     {% elif is_self %}
       <a class="btn btn-outline-primary" href="{% url 'organization:my_profile_edit' %}"><i class="bi bi-pencil me-1"></i>Mettre à jour mes informations</a>
+    {% endif %}
+    {% if is_self %}
+      <a class="btn btn-outline-secondary" href="{% url 'password_change' %}"><i class="bi bi-key me-1"></i>Changer mon mot de passe</a>
     {% endif %}
   </div>
 </div>
@@ -29,7 +34,15 @@
       <dt class="col-5">Téléphone</dt><dd class="col-7">{{ employee.phone|default:"—" }}</dd>
       <dt class="col-5">Adresse</dt><dd class="col-7">{{ employee.address|default:"—" }}</dd>
       <dt class="col-5">Date de naissance</dt><dd class="col-7">{{ employee.birth_date|date:"d/m/Y"|default:"—" }}</dd>
-      <dt class="col-5">Compte</dt><dd class="col-7">{{ employee.user.username|default:"—" }}</dd>
+      <dt class="col-5">Compte (CIN)</dt><dd class="col-7">{{ employee.user.username|default:"—" }}</dd>
+      {% if is_self %}
+      <dt class="col-5">Mot de passe</dt>
+      <dd class="col-7">
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'password_change' %}">
+          <i class="bi bi-key me-1"></i>Changer mon mot de passe
+        </a>
+      </dd>
+      {% endif %}
     </dl></div></div>
   <div class="col-lg-6"><div class="card h-100"><div class="card-header">Poste</div>
     <dl class="row mb-0 p-3">

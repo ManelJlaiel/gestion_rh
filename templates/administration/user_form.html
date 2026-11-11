@@ -1,14 +1,211 @@
 {% extends "base.html" %}
-{% block title %}{% if creating %}Nouveau compte{% else %}Modifier un compte{% endif %}{% endblock %}
+{% block title %}{% if creating %}Nouvel employé{% else %}Modifier l'employé{% endif %}{% endblock %}
+
 {% block content %}
-<h1 class="h3 mb-3">{% if creating %}Nouveau compte{% else %}Modifier le compte « {{ target.username }} »{% endif %}</h1>
-<div class="card" style="max-width: 640px"><div class="card-body">
-  <form method="post" novalidate>
-    {% include "administration/_form_fields.html" %}
-    <div class="d-flex gap-2">
-      <button class="btn btn-primary">Enregistrer</button>
-      <a class="btn btn-outline-secondary" href="{% url 'administration:users' %}">Annuler</a>
+<div class="container-fluid px-0" style="max-width: 900px;">
+  <!-- Fil d'Ariane -->
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb small">
+      <li class="breadcrumb-item"><a href="{% url 'administration:users' %}" class="text-decoration-none">Employés</a></li>
+      <li class="breadcrumb-item active" aria-current="page">{% if creating %}Nouvel employé{% else %}Modifier « {{ target.username }} »{% endif %}</li>
+    </ol>
+  </nav>
+
+  <!-- En-tête -->
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <div class="rounded-3 bg-primary bg-opacity-10 p-3 text-primary">
+      <i class="bi {% if creating %}bi-person-plus{% else %}bi-person-gear{% endif %} fs-3"></i>
     </div>
-  </form>
-</div></div>
+    <div>
+      <h1 class="h3 mb-1 fw-bold text-dark">
+        {% if creating %}Ajouter un nouvel employé{% else %}Modifier la fiche employé{% endif %}
+      </h1>
+      <p class="text-muted small mb-0">
+        {% if creating %}
+          Remplissez les informations ci-dessous pour créer la fiche employé et son compte d'accès.
+        {% else %}
+          Modifiez les informations personnelles ou professionnelles de l'employé <strong>{{ target.get_full_name|default:target.username }}</strong>.
+        {% endif %}
+      </p>
+    </div>
+  </div>
+
+  <!-- Formulaire principal -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div class="card-body p-4 p-md-5">
+      <form method="post" novalidate id="employeeForm">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+        <div class="alert alert-danger py-2 mb-4 d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+          <div>{{ form.non_field_errors|join:" " }}</div>
+        </div>
+        {% endif %}
+
+        <!-- Section 1 : Identité & Contact -->
+        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom text-uppercase text-secondary fw-semibold small">
+          <i class="bi bi-person-vcard text-primary"></i>
+          <span>1. Informations personnelles & Identité</span>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6" id="div_id_first_name">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.first_name.id_for_label }}">
+              {{ form.first_name.label }} {% if form.first_name.field.required %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person"></i></span>
+              {{ form.first_name }}
+            </div>
+            {% for e in form.first_name.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            {% if form.first_name.help_text %}<div class="form-text small text-muted">{{ form.first_name.help_text }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-6" id="div_id_last_name">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.last_name.id_for_label }}">
+              {{ form.last_name.label }} {% if form.last_name.field.required %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-person"></i></span>
+              {{ form.last_name }}
+            </div>
+            {% for e in form.last_name.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            {% if form.last_name.help_text %}<div class="form-text small text-muted">{{ form.last_name.help_text }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-6" id="div_id_username">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.username.id_for_label }}">
+              {{ form.username.label }} (Identifiant) {% if form.username.field.required %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-card-heading"></i></span>
+              {{ form.username }}
+            </div>
+            {% for e in form.username.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            {% if form.username.help_text %}<div class="form-text small text-muted">{{ form.username.help_text }}</div>{% endif %}
+          </div>
+
+          <div class="col-md-6" id="div_id_email">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.email.id_for_label }}">
+              {{ form.email.label }} {% if form.email.field.required %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-envelope"></i></span>
+              {{ form.email }}
+            </div>
+            {% for e in form.email.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            {% if form.email.help_text %}<div class="form-text small text-muted">{{ form.email.help_text }}</div>{% endif %}
+          </div>
+        </div>
+
+        <!-- Section 2 : Affectation & Rôle -->
+        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom text-uppercase text-secondary fw-semibold small mt-4">
+          <i class="bi bi-briefcase text-primary"></i>
+          <span>2. Affectation & Rôle dans l'organisation</span>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6" id="div_id_role">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.role.id_for_label }}">
+              {{ form.role.label }} {% if form.role.field.required %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-shield-check"></i></span>
+              {{ form.role }}
+            </div>
+            {% for e in form.role.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            <div class="form-text small text-muted">Définit les droits d'accès aux différentes fonctionnalités de Rhizo.</div>
+          </div>
+
+          <div class="col-md-6" id="div_id_department">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.department.id_for_label }}">
+              {{ form.department.label }} {% if form.department.field.required %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-diagram-3"></i></span>
+              {{ form.department }}
+            </div>
+            {% for e in form.department.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            {% if form.department.help_text %}<div class="form-text small text-muted">{{ form.department.help_text }}</div>{% endif %}
+          </div>
+        </div>
+
+        <!-- Section 3 : Sécurité (Création uniquement) -->
+        {% if creating and form.password %}
+        <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom text-uppercase text-secondary fw-semibold small mt-4">
+          <i class="bi bi-lock text-primary"></i>
+          <span>3. Sécurité du compte</span>
+        </div>
+
+        <div class="row g-3 mb-4">
+          <div class="col-md-6" id="div_id_password">
+            <label class="form-label fw-semibold small text-secondary" for="{{ form.password.id_for_label }}">
+              {{ form.password.label }} {% if form.password.field.required %}<span class="text-danger">*</span>{% endif %}
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-light text-muted border-end-0"><i class="bi bi-key"></i></span>
+              {{ form.password }}
+            </div>
+            {% for e in form.password.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+            <div class="form-text small text-muted">Ex: <code>Demo2026!</code> (l'employé pourra le modifier après connexion).</div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Boutons d'action -->
+        <div class="d-flex justify-content-between align-items-center pt-4 border-top mt-4 flex-wrap gap-2">
+          <a class="btn btn-outline-secondary px-4" href="{% url 'administration:users' %}">
+            <i class="bi bi-arrow-left me-1"></i>Annuler
+          </a>
+          <button type="submit" class="btn btn-primary px-4 shadow-sm">
+            <i class="bi bi-check-lg me-1"></i>{% if creating %}Créer l'employé{% else %}Enregistrer les modifications{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const roleSelect = document.getElementById("id_role");
+  const deptSelect = document.getElementById("id_department");
+  const deptLabel = document.querySelector("label[for='id_department']");
+  const deptHelp = document.querySelector("#div_id_department .form-text");
+  if (!roleSelect || !deptSelect) return;
+
+  const occupiedStr = deptSelect.getAttribute("data-occupied") || "";
+  const occupiedIds = new Set(occupiedStr.split(",").filter(Boolean));
+
+  function updateDepartmentOptions() {
+    const isManager = (roleSelect.value === "MANAGER");
+    if (deptLabel) {
+      deptLabel.innerHTML = (isManager ? "Département à diriger" : "Département") + (deptSelect.required ? ' <span class="text-danger">*</span>' : '');
+    }
+    if (deptHelp) {
+      deptHelp.textContent = isManager 
+        ? "Pour un manager, sélectionnez un département qui n'a pas encore de responsable."
+        : "Sélectionnez le département d'affectation de l'employé.";
+    }
+
+    // When role is MANAGER, disable departments that already have another manager
+    Array.from(deptSelect.options).forEach(function(opt) {
+      if (opt.value && occupiedIds.has(opt.value)) {
+        opt.disabled = isManager;
+        if (isManager && opt.selected) {
+          deptSelect.value = "";
+        }
+      } else {
+        opt.disabled = false;
+      }
+    });
+  }
+
+  roleSelect.addEventListener("change", updateDepartmentOptions);
+  updateDepartmentOptions();
+});
+</script>
 {% endblock %}

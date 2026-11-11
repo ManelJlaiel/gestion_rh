@@ -11,5 +11,6 @@ urlpatterns = [
     path("mot-de-passe/", PasswordChangeView.as_view(), name="password_change"),
     path("organisation/", include("organization.urls")),
     path("administration/", include("administration.urls")),
+    path("pointage/", include("attendance.urls")),
     path("django-admin/", admin.site.urls),
 ]

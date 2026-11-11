@@ -1,10 +1,57 @@
-:root { --sidebar-width: 250px; }
-body { background: #f5f6f8; }
-@media (min-width: 992px) {
-  .sidebar { width: var(--sidebar-width); min-height: 100vh; position: sticky; top: 0; }
+:root {
+  --sidebar-width: 250px;
+  --bs-offcanvas-width: 250px;
 }
-.sidebar .nav-link { border-radius: .4rem; }
-.sidebar .nav-link:hover { background: rgba(255,255,255,.08); }
-.main-content { min-width: 0; }
-.stat-card .stat-value { font-size: 1.75rem; font-weight: 600; line-height: 1.1; }
-.table td, .table th { vertical-align: middle; }
+
+body {
+  background: #f5f6f8;
+}
+
+/* ── Sidebar: locked at exactly 250px, never shrinks ── */
+aside.sidebar,
+.sidebar {
+  flex: 0 0 var(--sidebar-width) !important;
+  width: var(--sidebar-width) !important;
+  min-width: var(--sidebar-width) !important;
+  max-width: var(--sidebar-width) !important;
+}
+
+@media (min-width: 992px) {
+  aside.sidebar,
+  .sidebar {
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+  }
+}
+
+.sidebar .nav-link {
+  border-radius: .4rem;
+  white-space: nowrap;
+}
+
+.sidebar .nav-link:hover {
+  background: rgba(255, 255, 255, .08);
+}
+
+.sidebar .nav-link.active {
+  background-color: #0d6efd !important;
+  color: #fff !important;
+}
+
+.main-content {
+  min-width: 0 !important;
+  flex: 1 1 0% !important;
+}
+
+.stat-card .stat-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.table td,
+.table th {
+  vertical-align: middle;
+}

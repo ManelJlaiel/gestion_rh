@@ -3,8 +3,8 @@ from accounts.permissions import is_rh
 
 
 def can_view_employee(user, employee):
-    """RH : tout le monde. Employé : sa propre fiche. Manager : sa fiche et celles de son équipe directe."""
-    if is_rh(user):
+    """RH et Admin : tout le monde. Employé : sa propre fiche. Manager : sa fiche et celles de son équipe directe."""
+    if is_rh(user) or getattr(user, "is_admin_role", False):
         return True
     me = user.employee_profile
     if me is None:
@@ -15,8 +15,8 @@ def can_view_employee(user, employee):
 
 
 def can_view_documents(user, employee):
-    """Les pièces du dossier sont réservées au RH et à l'employé concerné."""
-    if is_rh(user):
+    """Les pièces du dossier sont réservées au RH, à l'Admin et à l'employé concerné."""
+    if is_rh(user) or getattr(user, "is_admin_role", False):
         return True
     me = user.employee_profile
     return me is not None and me.pk == employee.pk
