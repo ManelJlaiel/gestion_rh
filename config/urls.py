@@ -13,4 +13,5 @@ urlpatterns = [
     path("administration/", include("administration.urls")),
     path("pointage/", include("attendance.urls")),
     path("django-admin/", admin.site.urls),
+    path("analytics/", include("analytics.urls")),
 ]
