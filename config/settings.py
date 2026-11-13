@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "payroll",
     "audit",
     "administration",
+    "analytics",
 ]
 
 MIDDLEWARE = [
