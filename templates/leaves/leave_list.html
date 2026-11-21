@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% block title %}Congés{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="h3 mb-1">Gestion des congés</h1>
+    <div class="text-muted">{{ counts.total }} demande{{ counts.total|pluralize }} au total</div>
+  </div>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newLeaveModal">
+    <i class="bi bi-plus-lg me-1"></i>Enregistrer un congé
+  </button>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body py-3">
+        <div class="text-muted small">Total demandes</div>
+        <div class="fs-4 fw-bold text-dark">{{ counts.total }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100 border-start border-warning border-4">
+      <div class="card-body py-3">
+        <div class="text-muted small">En attente</div>
+        <div class="fs-4 fw-bold text-warning">{{ counts.pending }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100 border-start border-success border-4">
+      <div class="card-body py-3">
+        <div class="text-muted small">Approuvés</div>
+        <div class="fs-4 fw-bold text-success">{{ counts.approved }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100 border-start border-danger border-4">
+      <div class="card-body py-3">
+        <div class="text-muted small">Refusés</div>
+        <div class="fs-4 fw-bold text-danger">{{ counts.rejected }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Filter Bar -->
+<form class="row g-2 mb-3" method="get">
+  <div class="col-md-5">
+    <div class="input-group">
+      <span class="input-group-text bg-white text-muted"><i class="bi bi-search"></i></span>
+      <input class="form-control" name="q" value="{{ q }}" placeholder="Rechercher employé, matricule, motif...">
+    </div>
+  </div>
+  <div class="col-6 col-md-2">
+    <select class="form-select" name="status">
+      <option value="">Tous les statuts</option>
+      {% for value, label in statuses %}
+      <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-6 col-md-3">
+    <select class="form-select" name="type">
+      <option value="">Tous les types</option>
+      {% for t in leave_types %}
+      <option value="{{ t.pk }}" {% if selected_type == t.pk|stringformat:"s" %}selected{% endif %}>{{ t.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-6 col-md-1 d-grid">
+    <button class="btn btn-outline-primary"><i class="bi bi-funnel"></i></button>
+  </div>
+  {% if q or selected_status or selected_type %}
+  <div class="col-6 col-md-1 d-grid">
+    <a class="btn btn-outline-secondary" href="{% url 'leaves:leave_list' %}"><i class="bi bi-x-circle"></i></a>
+  </div>
+  {% endif %}
+</form>
+
+<!-- Table -->
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-hover mb-0 align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Employé</th>
+          <th>Type de congé</th>
+          <th>Période</th>
+          <th>Durée</th>
+          <th>Motif</th>
+          <th>Statut</th>
+          <th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in page %}
+        <tr>
+          <td>
+            <a href="{% url 'organization:employee_detail' l.employee.pk %}" class="fw-semibold text-decoration-none">
+              {{ l.employee.full_name }}
+            </a>
+            <small class="text-muted d-block">{{ l.employee.matricule }} · {{ l.employee.department|default:"—" }}</small>
+          </td>
+          <td>
+            <span class="badge text-bg-light border text-dark">{{ l.leave_type.name }}</span>
+          </td>
+          <td>
+            <div>Du <strong>{{ l.start_date|date:"d/m/Y" }}</strong></div>
+            <small class="text-muted">Au {{ l.end_date|date:"d/m/Y" }}</small>
+          </td>
+          <td>
+            <span class="badge bg-secondary bg-opacity-25 text-dark fs-6">{{ l.days_count }} j</span>
+          </td>
+          <td>
+            <span class="text-muted">{{ l.reason|default:"—"|truncatechars:35 }}</span>
+          </td>
+          <td>
+            {% if l.status == "APPROVED" %}
+              <span class="badge text-bg-success">Approuvé</span>
+            {% elif l.status == "PENDING" %}
+              <span class="badge text-bg-warning">En attente</span>
+            {% elif l.status == "REJECTED" %}
+              <span class="badge text-bg-danger">Refusé</span>
+            {% else %}
+              <span class="badge text-bg-secondary">{{ l.get_status_display }}</span>
+            {% endif %}
+          </td>
+          <td class="text-end text-nowrap">
+            {% if l.status == "PENDING" %}
+            <form method="post" action="{% url 'leaves:leave_approve' l.pk %}" class="d-inline">{% csrf_token %}
+              <button class="btn btn-sm btn-outline-success" title="Approuver"><i class="bi bi-check-lg"></i></button>
+            </form>
+            <form method="post" action="{% url 'leaves:leave_reject' l.pk %}" class="d-inline" onsubmit="return confirm('Refuser cette demande de congé ?');">{% csrf_token %}
+              <button class="btn btn-sm btn-outline-danger" title="Refuser"><i class="bi bi-x-lg"></i></button>
+            </form>
+            {% else %}
+              <span class="text-muted small">—</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="text-center text-muted py-4">Aucune demande de congé trouvée.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% include "administration/_pagination.html" %}
+
+<!-- Modal : Enregistrer un congé -->
+<div class="modal fade" id="newLeaveModal" tabindex="-1" aria-labelledby="newLeaveModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form method="post" action="{% url 'leaves:leave_create' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title" id="newLeaveModalLabel"><i class="bi bi-calendar-plus me-2 text-primary"></i>Enregistrer un congé</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Employé</label>
+            <select class="form-select" name="employee_id" required>
+              <option value="">Sélectionner un employé...</option>
+              {% for e in employees %}
+              <option value="{{ e.pk }}">{{ e.last_name }} {{ e.first_name }} ({{ e.matricule }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Type de congé</label>
+            <select class="form-select" name="leave_type_id" required>
+              {% for t in leave_types %}
+              <option value="{{ t.pk }}">{{ t.name }} {% if t.annual_days %}({{ t.annual_days }} j/an){% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label class="form-label fw-semibold">Date de début</label>
+              <input type="date" class="form-control" name="start_date" required>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-semibold">Date de fin</label>
+              <input type="date" class="form-control" name="end_date" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Motif (facultatif)</label>
+            <textarea class="form-control" name="reason" rows="2" placeholder="Ex. : Congé annuel, convenance personnelle..."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Annuler</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

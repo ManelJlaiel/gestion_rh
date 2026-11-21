@@ -1,53 +1,251 @@
 {% extends "base.html" %}
-{% block title %}Tableau de bord{% endblock %}
+{% block title %}Tableau de bord Administrateur{% endblock %}
+
 {% block content %}
-<h1 class="h3 mb-4">Tableau de bord administrateur</h1>
+{% include "dashboards/_welcome_banner.html" with banner_subtitle="Supervision du système, des comptes utilisateurs et de l'audit de sécurité" %}
+
+<!-- KPI Cards -->
 <div class="row g-3 mb-4">
-  <div class="col-6 col-xl-3"><div class="card stat-card h-100"><div class="card-body">
-    <div class="text-muted small">Employés</div><div class="stat-value">{{ total_users }}</div>
-    <div class="small text-muted">dont {{ inactive_users }} inactif{{ inactive_users|pluralize }}</div>
-  </div></div></div>
-  <div class="col-6 col-xl-3"><div class="card stat-card h-100"><div class="card-body">
-    <div class="text-muted small">Départements</div><div class="stat-value">{{ departments_count }}</div>
-  </div></div></div>
-  <div class="col-6 col-xl-3"><div class="card stat-card h-100"><div class="card-body">
-    <div class="text-muted small">Types de congés</div><div class="stat-value">{{ leave_types_count }}</div>
-  </div></div></div>
-  <div class="col-6 col-xl-3"><div class="card stat-card h-100"><div class="card-body">
-    <div class="text-muted small">Actions (7 jours)</div><div class="stat-value">{{ actions_this_week }}</div>
-  </div></div></div>
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card h-100 shadow-sm border-0" style="border-radius: 12px;">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted small fw-medium">Comptes utilisateurs</span>
+          <div class="p-2 rounded-3 text-forest" style="background-color: rgba(23, 77, 59, 0.1);">
+            <i data-lucide="users" style="width: 20px; height: 20px;"></i>
+          </div>
+        </div>
+        <div class="stat-value text-forest fw-bold fs-3 mb-1">{{ total_users }}</div>
+        <div class="small text-muted">dont {{ inactive_users }} inactif{{ inactive_users|pluralize }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card h-100 shadow-sm border-0" style="border-radius: 12px;">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted small fw-medium">Départements</span>
+          <div class="p-2 rounded-3 text-forest" style="background-color: rgba(23, 77, 59, 0.1);">
+            <i data-lucide="network" style="width: 20px; height: 20px;"></i>
+          </div>
+        </div>
+        <div class="stat-value text-forest fw-bold fs-3 mb-1">{{ departments_count }}</div>
+        <div class="small text-muted">Unités organisationnelles</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card h-100 shadow-sm border-0" style="border-radius: 12px;">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted small fw-medium">Types de congés</span>
+          <div class="p-2 rounded-3 text-forest" style="background-color: rgba(23, 77, 59, 0.1);">
+            <i data-lucide="calendar-days" style="width: 20px; height: 20px;"></i>
+          </div>
+        </div>
+        <div class="stat-value text-forest fw-bold fs-3 mb-1">{{ leave_types_count }}</div>
+        <div class="small text-muted">Règles configurées</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card h-100 shadow-sm border-0" style="border-radius: 12px;">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted small fw-medium">Actions (7 jours)</span>
+          <div class="p-2 rounded-3 text-forest" style="background-color: rgba(23, 77, 59, 0.1);">
+            <i data-lucide="shield-alert" style="width: 20px; height: 20px;"></i>
+          </div>
+        </div>
+        <div class="stat-value text-forest fw-bold fs-3 mb-1">{{ actions_this_week }}</div>
+        <div class="small text-muted">Événements d'audit</div>
+      </div>
+    </div>
+  </div>
 </div>
-<div class="row g-3">
-  <div class="col-lg-4">
-    <div class="card h-100">
-      <div class="card-header bg-white">Employés par rôle</div>
-      <ul class="list-group list-group-flush">
-        {% for label, n in roles %}
-        <li class="list-group-item d-flex justify-content-between">{{ label }}<span class="badge text-bg-secondary">{{ n }}</span></li>
-        {% endfor %}
-      </ul>
+
+<!-- Middle Section : Diagramme & Distribution par rôle -->
+<div class="row g-3 mb-4">
+  <!-- Bar Chart: Répartition des employés par département -->
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm h-100" style="border-radius: 12px;">
+      <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-0.5">
+            <i data-lucide="bar-chart-3" class="text-forest" style="width: 18px; height: 18px;"></i>
+            <h2 class="h6 mb-0 fw-bold text-forest">Répartition des employés</h2>
+          </div>
+          <div class="text-muted small" style="font-size: 0.78rem;">Distribution des effectifs par département</div>
+        </div>
+        <span class="badge bg-light text-forest border px-2.5 py-1" style="font-size: 0.78rem;">
+          {{ total_active_employees }} collaborateur{{ total_active_employees|pluralize }}
+        </span>
+      </div>
+      <div class="card-body p-3 pt-1">
+        <div style="position: relative; height: 270px; width: 100%;">
+          <canvas id="deptDistributionChart"></canvas>
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- Right Side: Répartition par rôle & Jours fériés -->
   <div class="col-lg-4">
-    <div class="card h-100">
-      <div class="card-header bg-white">Prochains jours fériés</div>
-      <ul class="list-group list-group-flush">
-        {% for h in upcoming_holidays %}
-        <li class="list-group-item d-flex justify-content-between">{{ h.name }}<span class="text-muted">{{ h.date|date:"d/m/Y" }}</span></li>
-        {% empty %}<li class="list-group-item text-muted">Aucun jour férié à venir.</li>{% endfor %}
-      </ul>
+    <div class="card border-0 shadow-sm mb-3" style="border-radius: 12px;">
+      <div class="card-header bg-white border-0 py-3 d-flex align-items-center gap-2" style="border-radius: 12px 12px 0 0;">
+        <i data-lucide="shield-check" class="text-forest" style="width: 18px; height: 18px;"></i>
+        <h2 class="h6 mb-0 fw-bold text-forest">Employés par rôle</h2>
+      </div>
+      <div class="card-body p-3 pt-0">
+        <ul class="list-group list-group-flush" style="font-size: 0.85rem;">
+          {% for label, n in roles %}
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-forest-subtle">
+            <span class="fw-medium text-dark">{{ label }}</span>
+            <span class="badge bg-forest-subtle text-forest rounded-pill px-2.5">{{ n }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+      <div class="card-header bg-white border-0 py-3 d-flex align-items-center gap-2" style="border-radius: 12px 12px 0 0;">
+        <i data-lucide="calendar" class="text-forest" style="width: 18px; height: 18px;"></i>
+        <h2 class="h6 mb-0 fw-bold text-forest">Prochains jours fériés</h2>
+      </div>
+      <div class="card-body p-3 pt-0">
+        <ul class="list-group list-group-flush" style="font-size: 0.85rem;">
+          {% for h in upcoming_holidays %}
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0 py-2 border-forest-subtle">
+            <span class="text-truncate me-2">{{ h.name }}</span>
+            <span class="badge bg-light text-muted border">{{ h.date|date:"d/m/Y" }}</span>
+          </li>
+          {% empty %}
+          <li class="list-group-item text-muted text-center py-3 border-0">Aucun jour férié à venir.</li>
+          {% endfor %}
+        </ul>
+      </div>
     </div>
   </div>
-  <div class="col-lg-4">
-    <div class="card h-100">
-      <div class="card-header bg-white d-flex justify-content-between">Dernières actions
-        <a href="{% url 'administration:audit' %}" class="small">Tout voir</a></div>
-      <ul class="list-group list-group-flush small">
+</div>
+
+<!-- Bottom Section: Journal d'audit récent -->
+<div class="card border-0 shadow-sm" style="border-radius: 12px;">
+  <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
+    <div class="d-flex align-items-center gap-2">
+      <i data-lucide="activity" class="text-forest" style="width: 18px; height: 18px;"></i>
+      <h2 class="h6 mb-0 fw-bold text-forest">Dernières actions du journal d'audit</h2>
+    </div>
+    <a href="{% url 'administration:audit' %}" class="btn btn-sm btn-outline-forest" style="font-size: 0.78rem;">
+      Tout voir
+    </a>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+      <thead class="table-light">
+        <tr>
+          <th style="width: 160px;">Date & Heure</th>
+          <th style="width: 180px;">Utilisateur</th>
+          <th style="width: 140px;">Action</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
         {% for log in recent_logs %}
-        <li class="list-group-item"><span class="text-muted">{{ log.timestamp|date:"d/m H:i" }}</span> · {{ log.user|default:"—" }} · {{ log.description|default:log.get_action_display }}</li>
-        {% empty %}<li class="list-group-item text-muted">Aucune action enregistrée.</li>{% endfor %}
-      </ul>
-    </div>
+        <tr>
+          <td class="text-muted">{{ log.timestamp|date:"d/m/Y H:i" }}</td>
+          <td>
+            <span class="fw-semibold text-dark">{{ log.user.get_full_name|default:log.user.username|default:"Système" }}</span>
+          </td>
+          <td>
+            <span class="badge bg-light text-dark border">{{ log.get_action_display }}</span>
+          </td>
+          <td class="text-muted">{{ log.description|default:"—" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="text-center py-4 text-muted">Aucune action enregistrée récemment.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const canvas = document.getElementById('deptDistributionChart');
+  if (!canvas) return;
+
+  const labels = {{ dept_labels|safe }};
+  const data = {{ dept_data|safe }};
+
+  if (window.Chart) {
+    new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Effectif',
+          data: data,
+          backgroundColor: '#1f53a3',
+          hoverBackgroundColor: '#174285',
+          borderRadius: 8,
+          borderSkipped: false,
+          maxBarThickness: 52,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#164A36',
+            titleFont: { size: 13, weight: 'bold' },
+            bodyFont: { size: 12 },
+            padding: 10,
+            cornerRadius: 8,
+            displayColors: false,
+            callbacks: {
+              label: function (ctx) {
+                const count = ctx.parsed.y;
+                return count + ' collaborateur' + (count > 1 ? 's' : '');
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { size: 12, weight: '500' },
+              color: '#4b5563'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.06)',
+              drawBorder: false,
+            },
+            ticks: {
+              stepSize: 1,
+              font: { size: 11 },
+              color: '#6b7280',
+              precision: 0
+            }
+          }
+        }
+      }
+    });
+  }
+});
+</script>
 {% endblock %}

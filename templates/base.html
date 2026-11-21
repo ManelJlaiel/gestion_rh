@@ -1,4 +1,4 @@
-{% load static %}
+﻿{% load static %}
 <!doctype html>
 <html lang="fr">
 
@@ -6,92 +6,71 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Rhizo{% endblock %} · Rhizo</title>
+  <link rel="icon" type="image/png" href="{% static 'img/Logo2.png' %}">
   <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
-  <link href="{% static 'css/app.css' %}?v=2" rel="stylesheet">
+  <link href="{% static 'css/app.css' %}?v=9" rel="stylesheet">
 </head>
 
 <body hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
-  {% if user.is_authenticated %}
-  <nav class="navbar navbar-dark bg-dark d-lg-none px-3 justify-content-start gap-3">
-    <button class="btn btn-outline-light btn-sm" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-label="Menu">
-      <i class="bi bi-list"></i>
+  {% if user.is_authenticated and request.resolver_match.url_name != 'login' %}
+  <!-- Fixed Top Navbar -->
+  <nav class="navbar app-navbar d-lg-none px-3 justify-content-start gap-3 sticky-top">
+    <button class="btn btn-outline-forest btn-sm" data-bs-toggle="offcanvas" data-bs-target="#sidebar"
+      aria-label="Menu">
+      <i data-lucide="menu"></i>
     </button>
-    <span class="navbar-brand mb-0 fw-bold">Rhizo</span>
+    <a href="{% url 'home' %}" class="navbar-brand mb-0 d-flex align-items-center">
+      <img src="{% static 'img/Logo1.png' %}" alt="Rhizo" height="34" style="max-height: 34px; object-fit: contain;">
+    </a>
   </nav>
-  <div class="d-flex">
-    <aside class="offcanvas-lg offcanvas-start sidebar bg-dark text-white" id="sidebar" tabindex="-1"
-      style="width: 250px; min-width: 250px; max-width: 250px; flex: 0 0 250px;">
-      <div class="p-3 d-flex flex-column h-100">
-        <a href="{% url 'home' %}" class="d-flex align-items-center text-white text-decoration-none mb-4">
-          <span class="fs-4 fw-bold">Rhizo</span>
-        </a>
-        <ul class="nav nav-pills flex-column gap-1 mb-auto">
-          {% block sidebar %}
-          {% with url_name=request.resolver_match.url_name %}
-          {% if user.is_admin_role %}
-          <li class="nav-item small text-uppercase text-white-50 mt-2 mb-1">Administration</li>
-          <li><a
-              class="nav-link text-white {% if url_name == 'dashboard' and request.resolver_match.app_name == 'administration' %}active{% endif %}"
-              href="{% url 'administration:dashboard' %}"><i class="bi bi-speedometer2 me-2"></i>Tableau de bord</a>
-          </li>
-          <li><a
-              class="nav-link text-white {% if 'user' in url_name or url_name == 'employee_list' or url_name == 'employee_create' or url_name == 'employee_edit' or url_name == 'employee_detail' and not is_self and employee.user_id != user.id %}active{% endif %}"
-              href="{% url 'administration:users' %}"><i class="bi bi-people me-2"></i>Employés</a></li>
-          <li><a class="nav-link text-white {% if request.resolver_match.app_name == 'attendance' %}active{% endif %}"
-              href="{% url 'attendance:dashboard' %}"><i class="bi bi-calendar-check me-2"></i>Pointage & Congés</a>
-          </li>
-          <li><a class="nav-link text-white {% if 'settings' in url_name %}active{% endif %}"
-              href="{% url 'administration:settings_home' %}"><i class="bi bi-sliders me-2"></i>Paramètres</a></li>
-          <li><a class="nav-link text-white {% if url_name == 'audit' %}active{% endif %}"
-              href="{% url 'administration:audit' %}"><i class="bi bi-journal-text me-2"></i>Journal d'audit</a></li>
-          <li><a
-              class="nav-link text-white {% if 'my_profile' in url_name or is_self or url_name == 'employee_detail' and employee.user_id == user.id %}active{% endif %}"
-              href="{% url 'organization:my_profile' %}"><i class="bi bi-person-badge me-2"></i>Mon profil</a></li>
-          {% endif %}
-          {% if user.role == "RH" %}
-          <li class="nav-item small text-uppercase text-white-50 mt-2 mb-1">Ressources humaines</li>
-          <li><a
-              class="nav-link text-white {% if 'user' in url_name or url_name == 'employee_list' or url_name == 'employee_create' or url_name == 'employee_edit' or url_name == 'employee_detail' and not is_self and employee.user_id != user.id %}active{% endif %}"
-              href="{% url 'administration:users' %}"><i class="bi bi-people me-2"></i>Employés</a></li>
-          <li><a class="nav-link text-white {% if 'department' in url_name %}active{% endif %}"
-              href="{% url 'organization:department_list' %}"><i class="bi bi-diagram-3 me-2"></i>Départements</a></li>
-          <li><a class="nav-link text-white {% if request.resolver_match.app_name == 'attendance' %}active{% endif %}"
-              href="{% url 'attendance:dashboard' %}"><i class="bi bi-calendar-check me-2"></i>Pointage & Congés</a>
-          </li>
-          <li><a
-              class="nav-link text-white {% if 'my_profile' in url_name or is_self or url_name == 'employee_detail' and employee.user_id == user.id %}active{% endif %}"
-              href="{% url 'organization:my_profile' %}"><i class="bi bi-person-badge me-2"></i>Mon profil</a></li>
-          {% endif %}
-          {% if not user.is_admin_role and user.role != "RH" %}
-          <li class="nav-item small text-uppercase text-white-50 mt-2 mb-1">Mon espace</li>
-          <li><a
-              class="nav-link text-white {% if 'my_profile' in url_name or is_self or url_name == 'employee_detail' and employee.user_id == user.id %}active{% endif %}"
-              href="{% url 'organization:my_profile' %}"><i class="bi bi-person-badge me-2"></i>Mon profil</a></li>
-          {% endif %}
-          {% endwith %}
-          {% comment %}
-          Les autres modules ajoutent ici leurs liens selon le rôle :
-          {% if user.role == "EMPLOYE" %} … {% endif %}
-          {% if user.role == "MANAGER" %} … {% endif %}
-          {% if user.role == "RH" %} … {% endif %}
-          {% endcomment %}
-          {% endblock %}
-        </ul>
-        <hr class="border-secondary">
-        <div class="d-flex align-items-center justify-content-between">
-          <div class="small">
-            <div>{{ user.get_full_name|default:user.username }}</div>
-            <div class="text-white-50">{{ user.get_role_display }}</div>
+
+  <div class="d-flex app-layout">
+    <!-- Pinned & Independently Scrollable Sidebar -->
+    <aside class="offcanvas-lg offcanvas-start sidebar" id="sidebar" tabindex="-1">
+      <div class="d-flex flex-column h-100 sidebar-inner">
+        <!-- Pinned Header : Logo & Collapse Button -->
+        <div class="p-3 pb-2 d-flex align-items-center justify-content-between sidebar-header flex-shrink-0">
+          <a href="{% url 'home' %}" class="d-flex align-items-center text-decoration-none">
+            <img src="{% static 'img/Logo1.png' %}" alt="Rhizo" class="brand-text" height="44"
+              style="max-height: 44px; max-width: 190px; object-fit: contain;">
+            <img src="{% static 'img/Logo2.png' %}" alt="Rhizo" class="brand-icon d-none" height="42" width="42"
+              style="max-height: 42px; max-width: 42px; object-fit: contain;">
+          </a>
+          <button id="sidebarToggleBtn" class="btn btn-sm btn-link p-0 text-decoration-none btn-toggle-sidebar"
+            title="Réduire / Agrandir" aria-label="Réduire">
+            <i data-lucide="panel-left-close"></i>
+          </button>
+        </div>
+
+        <!-- Independently Scrollable Navigation Container -->
+        <div class="sidebar-nav-scroll flex-grow-1 px-3 py-1">
+          <ul class="nav nav-pills flex-column gap-1 mb-auto">
+            {% block sidebar %}
+            {% include "_sidebar.html" %}
+            {% endblock %}
+          </ul>
+        </div>
+
+        <!-- Pinned Footer : User profile & Logout -->
+        <div class="p-3 pt-2 border-top border-forest-subtle sidebar-footer-wrapper flex-shrink-0">
+          <div class="d-flex align-items-center justify-content-between sidebar-footer">
+            <div class="small user-info-text text-truncate me-2">
+              <div class="fw-semibold text-truncate text-forest" style="font-size: 0.85rem;">{{ user.get_full_name|default:user.username }}</div>
+              <div class="text-forest-muted text-truncate" style="font-size: 0.72rem;">{{ user.get_role_display }}</div>
+            </div>
+            <form method="post" action="{% url 'logout' %}" class="m-0">{% csrf_token %}
+              <button class="btn btn-sm btn-outline-forest border-0 p-1" title="Déconnexion" aria-label="Déconnexion">
+                <i data-lucide="log-out"></i>
+              </button>
+            </form>
           </div>
-          <form method="post" action="{% url 'logout' %}">{% csrf_token %}
-            <button class="btn btn-sm btn-outline-light" title="Déconnexion" aria-label="Déconnexion"><i
-                class="bi bi-box-arrow-right"></i></button>
-          </form>
         </div>
       </div>
     </aside>
-    <main class="flex-grow-1 p-3 p-lg-4 main-content" style="min-width: 0;">
+
+    <!-- Independently Scrollable Main Content -->
+    <main class="flex-grow-1 p-3 p-lg-4 main-content">
       {% else %}
       <main class="container py-5">
         {% endif %}
@@ -105,10 +84,66 @@
         {% endfor %}
         {% block content %}{% endblock %}
       </main>
-      {% if user.is_authenticated %}
+      {% if user.is_authenticated and request.resolver_match.url_name != 'login' %}
   </div>{% endif %}
+
   <script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
   <script src="{% static 'vendor/htmx/htmx.min.js' %}"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    function refreshIcons() {
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+      refreshIcons();
+
+      const sidebar = document.getElementById("sidebar");
+      const toggleBtn = document.getElementById("sidebarToggleBtn");
+
+      // Restore collapsed state from localStorage
+      if (sidebar && localStorage.getItem("sidebar-collapsed") === "true") {
+        sidebar.classList.add("collapsed");
+        const icon = toggleBtn ? toggleBtn.querySelector("[data-lucide]") : null;
+        if (icon) icon.setAttribute("data-lucide", "panel-left-open");
+        refreshIcons();
+      }
+
+      function updateTooltips() {
+        const isCollapsed = sidebar && sidebar.classList.contains("collapsed");
+        document.querySelectorAll(".sidebar .nav-link").forEach(function (el) {
+          const instance = bootstrap.Tooltip.getInstance(el);
+          if (isCollapsed) {
+            if (!instance) new bootstrap.Tooltip(el);
+          } else {
+            if (instance) instance.dispose();
+          }
+        });
+      }
+
+      if (toggleBtn && sidebar) {
+        toggleBtn.addEventListener("click", function () {
+          sidebar.classList.toggle("collapsed");
+          const isCollapsed = sidebar.classList.contains("collapsed");
+          localStorage.setItem("sidebar-collapsed", isCollapsed ? "true" : "false");
+
+          const icon = toggleBtn.querySelector("[data-lucide]");
+          if (icon) {
+            icon.setAttribute("data-lucide", isCollapsed ? "panel-left-open" : "panel-left-close");
+            refreshIcons();
+          }
+          updateTooltips();
+        });
+        updateTooltips();
+      }
+    });
+
+    document.body.addEventListener("htmx:afterSwap", function () {
+      refreshIcons();
+    });
+  </script>
   {% block scripts %}{% endblock %}
 </body>
 

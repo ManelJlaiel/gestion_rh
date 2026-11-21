@@ -12,5 +12,7 @@ urlpatterns = [
     path("organisation/", include("organization.urls")),
     path("administration/", include("administration.urls")),
     path("pointage/", include("attendance.urls")),
+    path("conges/", include("leaves.urls")),
+    path("paie/", include("payroll.urls")),
     path("django-admin/", admin.site.urls),
 ]

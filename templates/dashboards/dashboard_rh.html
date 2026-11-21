@@ -1,0 +1,436 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord RH{% endblock %}
+
+{% block content %}
+{% include "dashboards/_welcome_banner.html" with banner_subtitle="Supervision globale des effectifs, du pointage et des demandes de congés" %}
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card h-100 shadow-sm border-0" style="border-radius: 12px;">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted small fw-medium">Collaborateurs actifs</span>
+          <div class="p-2 rounded-3 text-forest" style="background-color: rgba(23, 77, 59, 0.1);">
+            <i data-lucide="users" style="width: 20px; height: 20px;"></i>
+          </div>
+        </div>
+        <div class="stat-value text-forest fw-bold fs-3 mb-1">{{ active_employees_count }}</div>
+        <div class="small text-muted">{{ departments_count }} département{{ departments_count|pluralize }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card h-100 shadow-sm border-0" style="border-radius: 12px;">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted small fw-medium">En congé aujourd'hui</span>
+          <div class="p-2 rounded-3 text-forest" style="background-color: rgba(23, 77, 59, 0.1);">
+            <i data-lucide="calendar-check" style="width: 20px; height: 20px;"></i>
+          </div>
+        </div>
+        <div class="stat-value text-forest fw-bold fs-3 mb-1">{{ on_leave_today_count }}</div>
+        <div class="small text-muted">Absences autorisées</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card h-100 shadow-sm border-0" style="border-radius: 12px;">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted small fw-medium">Congés à traiter</span>
+          <div class="p-2 rounded-3 {% if pending_leaves_count > 0 %}text-warning{% else %}text-forest{% endif %}"
+               style="background-color: {% if pending_leaves_count > 0 %}rgba(255, 193, 7, 0.15){% else %}rgba(23, 77, 59, 0.1){% endif %};">
+            <i data-lucide="clock-alert" style="width: 20px; height: 20px;"></i>
+          </div>
+        </div>
+        <div class="stat-value {% if pending_leaves_count > 0 %}text-warning fw-bold{% else %}text-forest fw-bold{% endif %} fs-3 mb-1">
+          {{ pending_leaves_count }}
+        </div>
+        <div class="small text-muted">Demande{{ pending_leaves_count|pluralize }} en attente</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card h-100 shadow-sm border-0" style="border-radius: 12px;">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted small fw-medium">Pointages du jour</span>
+          <div class="p-2 rounded-3 text-forest" style="background-color: rgba(23, 77, 59, 0.1);">
+            <i data-lucide="user-check" style="width: 20px; height: 20px;"></i>
+          </div>
+        </div>
+        <div class="stat-value text-forest fw-bold fs-3 mb-1">{{ present_today_count }}</div>
+        <div class="small text-muted">dont {{ late_today_count }} en retard</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Row -->
+<div class="row g-3">
+  <!-- Left Column -->
+  <div class="col-lg-8">
+    <!-- Demandes de congés à valider -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+      <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
+        <div class="d-flex align-items-center gap-2">
+          <i data-lucide="clipboard-list" class="text-forest" style="width: 18px; height: 18px;"></i>
+          <h2 class="h6 mb-0 fw-bold text-forest">Demandes de congés à traiter</h2>
+          {% if pending_leaves_count > 0 %}
+            <span class="badge rounded-pill bg-warning text-dark">{{ pending_leaves_count }}</span>
+          {% endif %}
+        </div>
+        <a href="{% url 'leaves:leave_list' %}?status=PENDING" class="btn btn-sm btn-outline-forest" style="font-size: 0.78rem;">
+          Tout voir
+        </a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+          <thead class="table-light">
+            <tr>
+              <th>Collaborateur</th>
+              <th>Type</th>
+              <th>Période</th>
+              <th>Durée</th>
+              <th class="text-end pe-3">Décision</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for req in pending_leaves %}
+            <tr>
+              <td>
+                <div class="fw-semibold text-dark">{{ req.employee.full_name }}</div>
+                <div class="text-muted small">{{ req.employee.matricule }} &bull; {{ req.employee.department|default:"—" }}</div>
+              </td>
+              <td>
+                <span class="badge text-bg-light border">{{ req.leave_type.name }}</span>
+              </td>
+              <td>
+                <div>Du {{ req.start_date|date:"d/m/Y" }}</div>
+                <div class="text-muted small">au {{ req.end_date|date:"d/m/Y" }}</div>
+              </td>
+              <td><span class="fw-bold">{{ req.days_count }}</span> j</td>
+              <td class="text-end pe-3">
+                <div class="d-inline-flex gap-1">
+                  <form method="post" action="{% url 'leaves:leave_approve' req.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-success py-1 px-2" title="Approuver" style="font-size: 0.75rem;">
+                      <i data-lucide="check" style="width: 14px; height: 14px;"></i>
+                    </button>
+                  </form>
+                  <form method="post" action="{% url 'leaves:leave_reject' req.pk %}" class="d-inline">
+                    {% csrf_token %}
+                    <button class="btn btn-sm btn-outline-danger py-1 px-2" title="Refuser" style="font-size: 0.75rem;">
+                      <i data-lucide="x" style="width: 14px; height: 14px;"></i>
+                    </button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center py-4 text-muted">
+                <i data-lucide="check-circle" class="d-block mx-auto mb-2 text-forest" style="width: 28px; height: 28px; opacity: 0.5;"></i>
+                Aucune demande de congé en attente de validation.
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Répartition des employés par département -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+      <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-0.5">
+            <i data-lucide="bar-chart-3" class="text-forest" style="width: 18px; height: 18px;"></i>
+            <h2 class="h6 mb-0 fw-bold text-forest">Répartition des employés</h2>
+          </div>
+          <div class="text-muted small" style="font-size: 0.78rem;">Distribution des effectifs par département</div>
+        </div>
+        <span class="badge bg-light text-forest border px-2.5 py-1" style="font-size: 0.78rem;">
+          {{ active_employees_count }} collaborateur{{ active_employees_count|pluralize }}
+        </span>
+      </div>
+      <div class="card-body p-3 pt-1">
+        <div style="position: relative; height: 260px; width: 100%;">
+          <canvas id="rhDeptDistributionChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Derniers recrutements -->
+    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+      <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center" style="border-radius: 12px 12px 0 0;">
+        <div class="d-flex align-items-center gap-2">
+          <i data-lucide="user-plus" class="text-forest" style="width: 18px; height: 18px;"></i>
+          <h2 class="h6 mb-0 fw-bold text-forest">Derniers collaborateurs recrutés</h2>
+        </div>
+        <a href="{% url 'organization:employee_list' %}" class="btn btn-sm btn-outline-forest" style="font-size: 0.78rem;">
+          Annuaire complet
+        </a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="font-size: 0.85rem;">
+          <thead class="table-light">
+            <tr>
+              <th>Collaborateur</th>
+              <th>Poste</th>
+              <th>Département</th>
+              <th>Contrat</th>
+              <th>Date embauche</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for emp in recent_employees %}
+            <tr>
+              <td>
+                <a href="{% url 'organization:employee_detail' emp.pk %}" class="fw-semibold text-forest text-decoration-none">
+                  {{ emp.full_name }}
+                </a>
+                <div class="text-muted small">{{ emp.matricule }}</div>
+              </td>
+              <td>{{ emp.job_title }}</td>
+              <td>{{ emp.department|default:"—" }}</td>
+              <td>
+                <span class="badge text-bg-light border">{{ emp.get_contract_type_display }}</span>
+              </td>
+              <td>{{ emp.hire_date|date:"d/m/Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center py-3 text-muted">Aucun collaborateur enregistré.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column -->
+  <div class="col-lg-4">
+    <!-- Mon statut personnel (RH) -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+      <div class="card-header bg-white border-0 py-3" style="border-radius: 12px 12px 0 0;">
+        <div class="d-flex align-items-center gap-2">
+          <i data-lucide="user-check" class="text-forest" style="width: 18px; height: 18px;"></i>
+          <h2 class="h6 mb-0 fw-bold text-forest">Mon statut personnel</h2>
+        </div>
+      </div>
+      <div class="card-body p-3 pt-1" style="font-size: 0.85rem;">
+        <div class="p-3 rounded" style="background-color: #EAF3EE; border: 1px solid rgba(23, 77, 59, 0.15);">
+          <div class="text-muted small mb-1">Mon pointage aujourd'hui</div>
+          {% if my_today_attendance %}
+            <div class="d-flex align-items-center justify-content-between">
+              <span class="fw-bold {% if my_today_attendance.status == 'PRESENT' %}text-success{% elif my_today_attendance.status == 'LATE' %}text-warning{% else %}text-danger{% endif %}">
+                <i data-lucide="check" class="me-1" style="width: 16px; height: 16px;"></i>
+                {{ my_today_attendance.get_status_display }}
+              </span>
+              <span class="badge bg-white text-forest border">{{ my_today_attendance.check_in_time|time:"H:i"|default:"Pointé" }}</span>
+            </div>
+            {% if not my_today_attendance.check_out_time %}
+            <form method="post" action="{% url 'attendance:mark' %}" class="mt-2">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="check_out">
+              <input type="hidden" name="next" value="{% url 'home' %}">
+              <button type="submit" class="btn btn-outline-secondary btn-sm w-100 d-flex align-items-center justify-content-center gap-1.5 py-1.5" style="border-radius: 8px;">
+                <i data-lucide="log-out" style="width: 16px; height: 16px;"></i>
+                <span>Fin de journée</span>
+              </button>
+            </form>
+            {% else %}
+            <div class="mt-2 badge bg-secondary-subtle text-secondary border border-secondary border-opacity-25 w-100 py-1.5 text-center" style="border-radius: 8px; font-size: 0.78rem;">
+              <i data-lucide="log-out" class="me-1" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+              Fin ({{ my_today_attendance.check_out_time|time:"H:i" }})
+            </div>
+            {% endif %}
+          {% elif is_past_5pm %}
+            <div class="d-flex align-items-center justify-content-between mb-1">
+              <span class="fw-bold text-danger">
+                <i data-lucide="x-circle" class="me-1" style="width: 16px; height: 16px;"></i>
+                Absent
+              </span>
+              <span class="badge bg-danger-subtle text-danger border border-danger border-opacity-25">Non pointé</span>
+            </div>
+            <div class="text-danger small fw-semibold">
+              <i data-lucide="alert-circle" class="me-1" style="width: 14px; height: 14px;"></i>
+              Vous êtes absent(e) aujourd'hui
+            </div>
+          {% else %}
+            <div class="d-flex flex-column gap-2">
+              <div class="text-muted fst-italic">Non pointé pour aujourd'hui</div>
+              <form method="post" action="{% url 'attendance:mark' %}" class="mt-1">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="{{ clock_in_status }}">
+                <input type="hidden" name="next" value="{% url 'home' %}">
+                <button type="submit" class="btn btn-sm w-100 {{ clock_in_class }} shadow-sm d-flex align-items-center justify-content-center gap-1.5 py-1.5"
+                        style="border-radius: 8px;">
+                  <i data-lucide="fingerprint" style="width: 16px; height: 16px;"></i>
+                  <span>Pointer</span>
+                </button>
+              </form>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+      <div class="card-header bg-white border-0 py-3" style="border-radius: 12px 12px 0 0;">
+        <div class="d-flex align-items-center gap-2">
+          <i data-lucide="zap" class="text-forest" style="width: 18px; height: 18px;"></i>
+          <h2 class="h6 mb-0 fw-bold text-forest">Actions rapides RH</h2>
+        </div>
+      </div>
+      <div class="list-group list-group-flush p-2" style="font-size: 0.85rem;">
+        <a href="{% url 'organization:employee_create' %}" class="list-group-item list-group-item-action d-flex align-items-center gap-2.5 py-2.5 rounded border-0 mb-1">
+          <div class="p-1.5 rounded text-forest" style="background-color: rgba(23, 77, 59, 0.1);">
+            <i data-lucide="user-plus" style="width: 16px; height: 16px;"></i>
+          </div>
+          <span class="fw-medium">Nouveau collaborateur</span>
+        </a>
+        <a href="{% url 'organization:department_list' %}" class="list-group-item list-group-item-action d-flex align-items-center gap-2.5 py-2.5 rounded border-0 mb-1">
+          <div class="p-1.5 rounded text-forest" style="background-color: rgba(23, 77, 59, 0.1);">
+            <i data-lucide="network" style="width: 16px; height: 16px;"></i>
+          </div>
+          <span class="fw-medium">Gérer les départements</span>
+        </a>
+        <a href="{% url 'leaves:leave_list' %}" class="list-group-item list-group-item-action d-flex align-items-center gap-2.5 py-2.5 rounded border-0 mb-1">
+          <div class="p-1.5 rounded text-forest" style="background-color: rgba(23, 77, 59, 0.1);">
+            <i data-lucide="calendar-days" style="width: 16px; height: 16px;"></i>
+          </div>
+          <span class="fw-medium">Suivi des congés</span>
+        </a>
+        <a href="{% url 'attendance:dashboard' %}" class="list-group-item list-group-item-action d-flex align-items-center gap-2.5 py-2.5 rounded border-0 mb-1">
+          <div class="p-1.5 rounded text-forest" style="background-color: rgba(23, 77, 59, 0.1);">
+            <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
+          </div>
+          <span class="fw-medium">Suivi du pointage</span>
+        </a>
+        <a href="{% url 'organization:document_list' %}" class="list-group-item list-group-item-action d-flex align-items-center gap-2.5 py-2.5 rounded border-0">
+          <div class="p-1.5 rounded text-forest" style="background-color: rgba(23, 77, 59, 0.1);">
+            <i data-lucide="folder" style="width: 16px; height: 16px;"></i>
+          </div>
+          <span class="fw-medium">Gestion des documents</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Synthèse pointage du jour -->
+    <div class="card border-0 shadow-sm" style="border-radius: 12px;">
+      <div class="card-header bg-white border-0 py-3" style="border-radius: 12px 12px 0 0;">
+        <div class="d-flex align-items-center gap-2">
+          <i data-lucide="pie-chart" class="text-forest" style="width: 18px; height: 18px;"></i>
+          <h2 class="h6 mb-0 fw-bold text-forest">Pointage du jour</h2>
+        </div>
+      </div>
+      <div class="card-body p-3 pt-1">
+        <ul class="list-group list-group-flush mb-3" style="font-size: 0.85rem;">
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i data-lucide="check-circle" class="text-success me-2" style="width: 15px; height: 15px;"></i>Présents</span>
+            <span class="badge bg-success-subtle text-success fw-bold">{{ present_today_count }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i data-lucide="alert-triangle" class="text-warning me-2" style="width: 15px; height: 15px;"></i>En retard</span>
+            <span class="badge bg-warning-subtle text-warning-emphasis fw-bold">{{ late_today_count }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i data-lucide="calendar" class="text-info me-2" style="width: 15px; height: 15px;"></i>En congé autorisé</span>
+            <span class="badge bg-info-subtle text-info fw-bold">{{ on_leave_today_count }}</span>
+          </li>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <span><i data-lucide="x-circle" class="text-secondary me-2" style="width: 15px; height: 15px;"></i>Absents / Non pointés</span>
+            <span class="badge bg-secondary-subtle text-secondary fw-bold">{{ absent_today_count }}</span>
+          </li>
+        </ul>
+        <a href="{% url 'attendance:dashboard' %}" class="btn btn-forest w-100 btn-sm d-flex align-items-center justify-content-center gap-2 py-2">
+          <span>Ouvrir la feuille de pointage</span>
+          <i data-lucide="arrow-right" style="width: 14px; height: 14px;"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const canvas = document.getElementById('rhDeptDistributionChart');
+  if (!canvas) return;
+
+  const labels = {{ dept_labels|safe }};
+  const data = {{ dept_data|safe }};
+
+  if (window.Chart) {
+    new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Effectif',
+          data: data,
+          backgroundColor: '#1f53a3',
+          hoverBackgroundColor: '#174285',
+          borderRadius: 8,
+          borderSkipped: false,
+          maxBarThickness: 52,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: '#164A36',
+            titleFont: { size: 13, weight: 'bold' },
+            bodyFont: { size: 12 },
+            padding: 10,
+            cornerRadius: 8,
+            displayColors: false,
+            callbacks: {
+              label: function (ctx) {
+                const count = ctx.parsed.y;
+                return count + ' collaborateur' + (count > 1 ? 's' : '');
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            grid: { display: false },
+            ticks: {
+              font: { size: 12, weight: '500' },
+              color: '#4b5563'
+            }
+          },
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(0, 0, 0, 0.06)',
+              drawBorder: false,
+            },
+            ticks: {
+              stepSize: 1,
+              font: { size: 11 },
+              color: '#6b7280',
+              precision: 0
+            }
+          }
+        }
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

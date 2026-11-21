@@ -1,4 +1,5 @@
-from datetime import date, datetime
+from datetime import date, datetime, time
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q, Sum
@@ -76,6 +77,10 @@ def attendance_dashboard(request):
     )
     default_annual = annual_leave_type.annual_days if annual_leave_type else 30
 
+    now_time = timezone.localtime().time()
+    work_end = getattr(settings, "WORK_END_TIME", time(17, 0))
+    is_past_5pm = now_time >= work_end
+
     rows = []
     present_count = 0
     late_count = 0
@@ -98,6 +103,7 @@ def attendance_dashboard(request):
         remaining_days = max(0, annual_limit - days_taken)
         is_limit_reached = (days_taken >= annual_limit) if annual_limit > 0 else False
 
+        is_auto_absent = False
         if current_leave:
             on_leave_count += 1
         if att:
@@ -107,6 +113,9 @@ def attendance_dashboard(request):
                 late_count += 1
             elif att.status == Attendance.Status.ABSENT:
                 absent_count += 1
+        elif not current_leave and ((selected_date == timezone.localdate() and is_past_5pm) or (selected_date < timezone.localdate())):
+            absent_count += 1
+            is_auto_absent = True
 
         rows.append({
             "employee": emp,
@@ -117,6 +126,7 @@ def attendance_dashboard(request):
             "annual_limit": annual_limit,
             "remaining_days": remaining_days,
             "is_limit_reached": is_limit_reached,
+            "is_auto_absent": is_auto_absent,
             "role_display": emp.user.get_role_display() if emp.user else "—",
             "role": emp.user.role if emp.user else "",
         })
@@ -132,6 +142,7 @@ def attendance_dashboard(request):
     context = {
         "selected_date": selected_date,
         "is_today": selected_date == timezone.localdate(),
+        "is_past_5pm": is_past_5pm,
         "rows": rows,
         "departments": departments,
         "leave_types": leave_types,
@@ -153,30 +164,51 @@ def attendance_dashboard(request):
 @login_required
 @require_POST
 def mark_attendance(request):
-    """Enregistre ou met à jour le pointage (Présent / En retard / Absent)."""
+    """Enregistre ou met à jour le pointage (Présent / En retard / Absent / Fin de journée)."""
     user = request.user
     emp_id = request.POST.get("employee_id")
     status = request.POST.get("status")
+    action = request.POST.get("action", "check_in")  # "check_in" | "check_out"
     date_str = request.POST.get("date", "")
+    next_url = request.POST.get("next") or (f"/pointage/?date={date_str}" if date_str else None)
 
     try:
         target_date = datetime.strptime(date_str, "%Y-%m-%d").date() if date_str else timezone.localdate()
     except ValueError:
         target_date = timezone.localdate()
 
-    if not emp_id and user.employee_profile:
+    if (not emp_id and user.employee_profile) or (user.employee_profile and str(emp_id) == str(user.employee_profile.id)):
         employee = user.employee_profile
     else:
         if not (user.is_admin_role or user.role == "RH" or user.role == "MANAGER"):
             messages.error(request, "Vous n'avez pas l'autorisation de modifier ce pointage.")
-            return redirect("attendance:dashboard")
+            return redirect(next_url or "attendance:dashboard")
         employee = get_object_or_404(Employee, pk=emp_id)
+
+    now_time = timezone.localtime().time()
+
+    # ── CHECK-OUT (fin de journée) ──────────────────────────────────────────
+    if action == "check_out":
+        att = Attendance.objects.filter(employee=employee, date=target_date).first()
+        if att:
+            att.check_out_time = now_time
+            att.save(update_fields=["check_out_time"])
+            log_action(user, AuditLog.Action.UPDATE, att,
+                       f"Fin de journée de {employee.full_name} le {target_date:%d/%m/%Y} : {now_time:%H:%M}")
+            messages.success(request, f"Fin de journée enregistrée pour {employee.full_name} à {now_time:%H:%M}.")
+        else:
+            messages.warning(request, "Aucun pointage d'arrivée trouvé pour aujourd'hui.")
+        return redirect(next_url or f"/pointage/?date={target_date}")
+
+    # ── CHECK-IN (arrivée) ─────────────────────────────────────────────────
+    if not status:
+        work_start = getattr(settings, "WORK_START_TIME", time(9, 0))
+        status = Attendance.Status.PRESENT if now_time <= work_start else Attendance.Status.LATE
 
     if status not in Attendance.Status.values:
         messages.error(request, "Statut de pointage invalide.")
-        return redirect(f"/pointage/?date={target_date}")
+        return redirect(next_url or f"/pointage/?date={target_date}")
 
-    now_time = timezone.localtime().time()
     attendance, created = Attendance.objects.update_or_create(
         employee=employee,
         date=target_date,
@@ -193,7 +225,7 @@ def mark_attendance(request):
         f"Pointage de {employee.full_name} le {target_date:%d/%m/%Y} : {attendance.get_status_display()}",
     )
     messages.success(request, f"Pointage de {employee.full_name} enregistré : {attendance.get_status_display()}.")
-    return redirect(f"/pointage/?date={target_date}")
+    return redirect(next_url or f"/pointage/?date={target_date}")
 
 
 @login_required

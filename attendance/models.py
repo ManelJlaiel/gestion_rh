@@ -24,6 +24,7 @@ class Attendance(models.Model):
         default=Status.PRESENT,
     )
     check_in_time = models.TimeField("heure d'arrivée", null=True, blank=True)
+    check_out_time = models.TimeField("heure de sortie", null=True, blank=True)
     notes = models.CharField("remarques", max_length=255, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

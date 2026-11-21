@@ -14,7 +14,7 @@ from django.views.decorators.http import require_POST
 from accounts.permissions import role_required
 from audit.models import AuditLog, log_action
 from leaves.models import Holiday, LeaveType
-from organization.models import Department
+from organization.models import Department, Employee
 from payroll.models import PayrollRate
 
 from .forms import (
@@ -84,6 +84,24 @@ def _section(key):
 def dashboard(request):
     by_role = {row["role"]: row["n"] for row in User.objects.values("role").annotate(n=Count("id"))}
     week_ago = timezone.now() - timedelta(days=7)
+
+    # Répartition des employés par département
+    departments = Department.objects.annotate(
+        emp_count=Count("employees", filter=Q(employees__is_active=True))
+    ).order_by("name")
+
+    dept_labels = [d.name for d in departments]
+    dept_data = [d.emp_count for d in departments]
+
+    no_dept_count = Employee.objects.filter(is_active=True, department__isnull=True).count()
+    if no_dept_count > 0:
+        dept_labels.append("Sans affectation")
+        dept_data.append(no_dept_count)
+
+    dept_stats = list(zip(dept_labels, dept_data))
+    max_dept_count = max(dept_data) if dept_data else 1
+    total_active_employees = sum(dept_data)
+
     context = {
         "total_users": User.objects.count(),
         "inactive_users": User.objects.filter(is_active=False).count(),
@@ -93,6 +111,11 @@ def dashboard(request):
         "upcoming_holidays": Holiday.objects.filter(date__gte=timezone.localdate())[:5],
         "recent_logs": AuditLog.objects.select_related("user")[:8],
         "actions_this_week": AuditLog.objects.filter(timestamp__gte=week_ago).count(),
+        "dept_labels": dept_labels,
+        "dept_data": dept_data,
+        "dept_stats": dept_stats,
+        "max_dept_count": max(max_dept_count, 1),
+        "total_active_employees": total_active_employees,
     }
     return render(request, "administration/dashboard.html", context)
 

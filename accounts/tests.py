@@ -88,7 +88,7 @@ class PasswordChangeTests(TestCase):
             reverse("password_change"),
             {"old_password": "Ancien-Mot-De-Passe-1", "new_password1": "Nouveau-Mot-De-Passe-2", "new_password2": "Nouveau-Mot-De-Passe-2"},
         )
-        self.assertRedirects(resp, reverse("home"), fetch_redirect_response=False)
+        self.assertRedirects(resp, reverse("organization:my_profile"), fetch_redirect_response=False)
         self.user.refresh_from_db()
         self.assertTrue(self.user.check_password("Nouveau-Mot-De-Passe-2"))
         self.assertTrue(AuditLog.objects.filter(action=AuditLog.Action.UPDATE, user=self.user).exists())
@@ -108,10 +108,18 @@ class HomeRedirectTests(TestCase):
     def test_redirection_selon_le_role(self):
         admin = User.objects.create_user("a", password="x", role=User.Role.ADMIN)
         rh = User.objects.create_user("r", password="x", role=User.Role.RH)
+        mgr = User.objects.create_user("m", password="x", role=User.Role.MANAGER)
         emp = User.objects.create_user("e", password="x", role=User.Role.EMPLOYE)
+
         self.client.force_login(admin)
         self.assertRedirects(self.client.get(reverse("home")), reverse("administration:dashboard"), fetch_redirect_response=False)
+
+        # RH, Manager et Employé disposent de leur propre tableau de bord dédié
         self.client.force_login(rh)
-        self.assertRedirects(self.client.get(reverse("home")), reverse("organization:employee_list"), fetch_redirect_response=False)
+        self.assertEqual(self.client.get(reverse("home")).status_code, 200)
+
+        self.client.force_login(mgr)
+        self.assertEqual(self.client.get(reverse("home")).status_code, 200)
+
         self.client.force_login(emp)
         self.assertEqual(self.client.get(reverse("home")).status_code, 200)

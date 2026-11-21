@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}Paie{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <div>
+    <h1 class="h3 mb-1">Gestion de la paie</h1>
+    <div class="text-muted">Aperçu de la masse salariale et cotisations sociales</div>
+  </div>
+  <a class="btn btn-outline-secondary" href="{% url 'administration:settings' 'taux-paie' %}">
+    <i class="bi bi-sliders me-1"></i>Configurer les taux de paie
+  </a>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100 border-start border-primary border-4">
+      <div class="card-body py-3">
+        <div class="text-muted small">Masse salariale brute</div>
+        <div class="fs-4 fw-bold text-primary">{{ total_payroll|floatformat:3 }} DT</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body py-3">
+        <div class="text-muted small">Salaire moyen brut</div>
+        <div class="fs-4 fw-bold text-dark">{{ avg_salary|floatformat:3 }} DT</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body py-3">
+        <div class="text-muted small">Effectif actif</div>
+        <div class="fs-4 fw-bold text-dark">{{ total_employees }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100 border-start border-info border-4">
+      <div class="card-body py-3">
+        <div class="text-muted small">Taux CNSS salarié</div>
+        <div class="fs-4 fw-bold text-info">{{ cnss_pct }} %</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <!-- Salaires par employé -->
+  <div class="col-lg-8">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white py-3">
+        <h5 class="card-title mb-0 fs-6 fw-bold">
+          <i class="bi bi-people me-2 text-primary"></i>Rémunération par employé
+        </h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover mb-0 align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Employé</th>
+              <th>Poste / Dép.</th>
+              <th class="text-end">Salaire brut</th>
+              <th class="text-end">Retenue CNSS ({{ cnss_pct }}%)</th>
+              <th class="text-end">Brut imposable</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+            <tr>
+              <td>
+                <a href="{% url 'organization:employee_detail' r.employee.pk %}" class="fw-semibold text-decoration-none">
+                  {{ r.employee.full_name }}
+                </a>
+                <small class="text-muted d-block">{{ r.employee.matricule }}</small>
+              </td>
+              <td>
+                <div>{{ r.employee.job_title }}</div>
+                <small class="text-muted">{{ r.employee.department|default:"—" }}</small>
+              </td>
+              <td class="text-end fw-semibold text-nowrap">
+                {{ r.base_salary|floatformat:3 }} DT
+              </td>
+              <td class="text-end text-danger text-nowrap">
+                -{{ r.cnss_deduction|floatformat:3 }} DT
+              </td>
+              <td class="text-end text-success fw-bold text-nowrap">
+                {{ r.taxable_salary|floatformat:3 }} DT
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="text-center text-muted py-4">Aucun employé actif rémunéré.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barème et taux en vigueur -->
+  <div class="col-lg-4">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0 fs-6 fw-bold">
+          <i class="bi bi-percent me-2 text-primary"></i>Taux en vigueur
+        </h5>
+        <a class="btn btn-sm btn-outline-primary" href="{% url 'administration:settings' 'taux-paie' %}">Modifier</a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Type</th>
+                <th>Taux</th>
+                <th>Tranche</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rate in rates %}
+              <tr>
+                <td>
+                  <span class="badge {% if rate.code == 'CNSS' %}text-bg-info{% else %}text-bg-secondary{% endif %}">
+                    {{ rate.get_code_display }}
+                  </span>
+                </td>
+                <td class="fw-bold">{{ rate.rate }} %</td>
+                <td class="small text-muted">
+                  {% if rate.lower_bound or rate.upper_bound %}
+                    {{ rate.lower_bound|default:"0" }} → {{ rate.upper_bound|default:"∞" }} DT
+                  {% else %}
+                    —
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="3" class="text-center text-muted py-3 small">Aucun taux configuré.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

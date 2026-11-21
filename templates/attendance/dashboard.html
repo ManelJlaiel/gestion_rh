@@ -142,7 +142,8 @@
           <th style="width:105px">Rôle</th>
           <th>Département</th>
           <th class="text-center" style="width:140px">Congé</th>
-          <th class="text-center" style="width:130px">Pointage</th>
+          <th class="text-center" style="width:120px">Arrivée</th>
+          <th class="text-center" style="width:120px">Fin de journée</th>
         </tr>
       </thead>
       <tbody>
@@ -202,7 +203,7 @@
             </div>
           </td>
 
-          <!-- Pointage -->
+          <!-- Arrivée -->
           <td class="text-center">
             {% if row.attendance %}
               {% if row.attendance.status == "PRESENT" %}
@@ -216,6 +217,32 @@
               {% endif %}
             {% elif row.on_leave %}
               <span class="badge text-bg-primary">Congé</span>
+            {% elif row.is_auto_absent %}
+              <span class="badge text-bg-danger">Absent</span>
+              <div class="text-danger" style="font-size:.72rem">Non pointé (17h)</div>
+            {% else %}
+              <span class="text-muted">—</span>
+            {% endif %}
+          </td>
+
+          <!-- Fin de journée -->
+          <td class="text-center">
+            {% if row.attendance and row.attendance.check_out_time %}
+              <span class="badge text-bg-secondary">{{ row.attendance.check_out_time|time:"H:i" }}</span>
+            {% elif row.attendance and row.attendance.check_in_time and is_today and not row.on_leave %}
+              {% if user.is_admin_role or user.role == "RH" %}
+              <form method="post" action="{% url 'attendance:mark' %}" class="d-inline">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="check_out">
+                <input type="hidden" name="employee_id" value="{{ row.employee.id }}">
+                <input type="hidden" name="date" value="{{ selected_date|date:'Y-m-d' }}">
+                <button class="btn btn-outline-secondary btn-sm" title="Enregistrer fin de journée">
+                  <i class="bi bi-box-arrow-right"></i> Fin
+                </button>
+              </form>
+              {% else %}
+              <span class="text-muted">—</span>
+              {% endif %}
             {% else %}
               <span class="text-muted">—</span>
             {% endif %}
@@ -223,7 +250,7 @@
         </tr>
         {% empty %}
         <tr>
-          <td colspan="5" class="text-center text-muted py-5">
+          <td colspan="6" class="text-center text-muted py-5">
             <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary opacity-50"></i>
             Aucun employé trouvé.
           </td>

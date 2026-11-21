@@ -13,6 +13,7 @@ urlpatterns = [
     path("employes/<int:pk>/modifier/", views.employee_edit, name="employee_edit"),
     path("employes/<int:pk>/desactiver/", views.employee_deactivate, name="employee_deactivate"),
     # Contrats et documents d'un employé
+    path("documents/", views.document_list, name="document_list"),
     path("employes/<int:employee_pk>/contrats/ajouter/", views.contract_create, name="contract_create"),
     path("contrats/<int:pk>/modifier/", views.contract_edit, name="contract_edit"),
     path("employes/<int:employee_pk>/documents/ajouter/", views.document_upload, name="document_upload"),

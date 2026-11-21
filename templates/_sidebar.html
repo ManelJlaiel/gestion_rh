@@ -1,0 +1,326 @@
+{% with url_name=request.resolver_match.url_name app_name=request.resolver_match.app_name %}
+
+{# ==================== 1. ADMINISTRATEUR ==================== #}
+{% if user.is_admin_role %}
+
+  <!-- WORKSPACE -->
+  <li class="nav-section-title">Workspace</li>
+  <li>
+    <a class="nav-link {% if url_name == 'dashboard' and app_name == 'administration' %}active{% endif %}"
+       href="{% url 'administration:dashboard' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Tableau de bord">
+      <i data-lucide="layout-dashboard"></i>
+      <span class="nav-link-text">Tableau de bord</span>
+    </a>
+  </li>
+
+  <!-- GESTION DES RESSOURCES HUMAINES -->
+  <li class="nav-section-title">Gestion des ressources humaines</li>
+  <li>
+    <a class="nav-link {% if app_name == 'organization' and 'employee' in url_name and not is_self and employee.user_id != user.id %}active{% endif %}"
+       href="{% url 'organization:employee_list' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Employés">
+      <i data-lucide="users"></i>
+      <span class="nav-link-text">Employés</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if 'department' in url_name %}active{% endif %}"
+       href="{% url 'organization:department_list' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Départements">
+      <i data-lucide="network"></i>
+      <span class="nav-link-text">Départements</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if url_name == 'org_chart' %}active{% endif %}"
+       href="{% url 'organization:org_chart' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Organigramme">
+      <i data-lucide="git-fork"></i>
+      <span class="nav-link-text">Organigramme</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if 'document' in url_name %}active{% endif %}"
+       href="{% url 'organization:document_list' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Documents">
+      <i data-lucide="folder"></i>
+      <span class="nav-link-text">Documents</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if app_name == 'leaves' %}active{% endif %}"
+       href="{% url 'leaves:leave_list' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Congés">
+      <i data-lucide="calendar-days"></i>
+      <span class="nav-link-text">Congés</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if app_name == 'attendance' %}active{% endif %}"
+       href="{% url 'attendance:dashboard' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Pointage">
+      <i data-lucide="clock"></i>
+      <span class="nav-link-text">Pointage</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if app_name == 'payroll' %}active{% endif %}"
+       href="{% url 'payroll:dashboard' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Paie">
+      <i data-lucide="banknote"></i>
+      <span class="nav-link-text">Paie</span>
+    </a>
+  </li>
+
+  <!-- ADMINISTRATION -->
+  <li class="nav-section-title">Administration</li>
+  <li>
+    <a class="nav-link {% if 'user' in url_name and app_name == 'administration' %}active{% endif %}"
+       href="{% url 'administration:users' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Comptes & Accès">
+      <i data-lucide="shield-check"></i>
+      <span class="nav-link-text">Comptes & Accès</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if url_name == 'audit' %}active{% endif %}"
+       href="{% url 'administration:audit' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Journal d'audit">
+      <i data-lucide="file-text"></i>
+      <span class="nav-link-text">Journal d'audit</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if 'settings' in url_name %}active{% endif %}"
+       href="{% url 'administration:settings_home' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Paramètres">
+      <i data-lucide="sliders"></i>
+      <span class="nav-link-text">Paramètres</span>
+    </a>
+  </li>
+
+  <!-- MON ESPACE -->
+  <li class="nav-section-title">Mon espace</li>
+  <li>
+    <a class="nav-link {% if 'my_profile' in url_name or is_self or url_name == 'employee_detail' and employee.user_id == user.id %}active{% endif %}"
+       href="{% url 'organization:my_profile' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Mon profil">
+      <i data-lucide="user"></i>
+      <span class="nav-link-text">Mon profil</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if url_name == 'password_change' %}active{% endif %}"
+       href="{% url 'password_change' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Mot de passe">
+      <i data-lucide="key"></i>
+      <span class="nav-link-text">Mot de passe</span>
+    </a>
+  </li>
+
+{% endif %}
+
+{# ==================== 2. RESSOURCES HUMAINES (RH) ==================== #}
+{% if user.role == "RH" and not user.is_admin_role %}
+
+  <!-- WORKSPACE -->
+  <li class="nav-section-title">Workspace</li>
+  <li>
+    <a class="nav-link {% if url_name == 'home' %}active{% endif %}"
+       href="{% url 'home' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Tableau de bord">
+      <i data-lucide="layout-dashboard"></i>
+      <span class="nav-link-text">Tableau de bord</span>
+    </a>
+  </li>
+
+  <li class="nav-section-title">Gestion des ressources humaines</li>
+  <li>
+    <a class="nav-link {% if app_name == 'organization' and 'employee' in url_name and not is_self and employee.user_id != user.id %}active{% endif %}"
+       href="{% url 'organization:employee_list' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Employés">
+      <i data-lucide="users"></i>
+      <span class="nav-link-text">Employés</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if 'department' in url_name %}active{% endif %}"
+       href="{% url 'organization:department_list' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Départements">
+      <i data-lucide="network"></i>
+      <span class="nav-link-text">Départements</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if url_name == 'org_chart' %}active{% endif %}"
+       href="{% url 'organization:org_chart' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Organigramme">
+      <i data-lucide="git-fork"></i>
+      <span class="nav-link-text">Organigramme</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if 'document' in url_name %}active{% endif %}"
+       href="{% url 'organization:document_list' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Documents">
+      <i data-lucide="folder"></i>
+      <span class="nav-link-text">Documents</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if app_name == 'leaves' %}active{% endif %}"
+       href="{% url 'leaves:leave_list' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Congés">
+      <i data-lucide="calendar-days"></i>
+      <span class="nav-link-text">Congés</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if app_name == 'attendance' %}active{% endif %}"
+       href="{% url 'attendance:dashboard' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Pointage">
+      <i data-lucide="clock"></i>
+      <span class="nav-link-text">Pointage</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if app_name == 'payroll' %}active{% endif %}"
+       href="{% url 'payroll:dashboard' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Paie">
+      <i data-lucide="banknote"></i>
+      <span class="nav-link-text">Paie</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if 'settings' in url_name %}active{% endif %}"
+       href="{% url 'administration:settings_home' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Paramètres">
+      <i data-lucide="sliders"></i>
+      <span class="nav-link-text">Paramètres</span>
+    </a>
+  </li>
+
+  <li class="nav-section-title">Mon espace</li>
+  <li>
+    <a class="nav-link {% if 'my_profile' in url_name or is_self or url_name == 'employee_detail' and employee.user_id == user.id %}active{% endif %}"
+       href="{% url 'organization:my_profile' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Mon profil">
+      <i data-lucide="user"></i>
+      <span class="nav-link-text">Mon profil</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if url_name == 'password_change' %}active{% endif %}"
+       href="{% url 'password_change' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Mot de passe">
+      <i data-lucide="key"></i>
+      <span class="nav-link-text">Mot de passe</span>
+    </a>
+  </li>
+
+{% endif %}
+
+{# ==================== 3. MANAGER ==================== #}
+{% if user.role == "MANAGER" and not user.is_admin_role %}
+
+  <!-- WORKSPACE -->
+  <li class="nav-section-title">Workspace</li>
+  <li>
+    <a class="nav-link {% if url_name == 'home' %}active{% endif %}"
+       href="{% url 'home' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Tableau de bord">
+      <i data-lucide="layout-dashboard"></i>
+      <span class="nav-link-text">Tableau de bord</span>
+    </a>
+  </li>
+
+  <li class="nav-section-title">Mon équipe</li>
+  <li>
+    <a class="nav-link {% if app_name == 'attendance' %}active{% endif %}"
+       href="{% url 'attendance:dashboard' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Pointage">
+      <i data-lucide="clock"></i>
+      <span class="nav-link-text">Pointage</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if app_name == 'leaves' %}active{% endif %}"
+       href="{% url 'leaves:leave_list' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Congés">
+      <i data-lucide="calendar-days"></i>
+      <span class="nav-link-text">Congés</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if url_name == 'org_chart' %}active{% endif %}"
+       href="{% url 'organization:org_chart' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Organigramme">
+      <i data-lucide="git-fork"></i>
+      <span class="nav-link-text">Organigramme</span>
+    </a>
+  </li>
+
+  <li class="nav-section-title">Mon espace</li>
+  <li>
+    <a class="nav-link {% if 'my_profile' in url_name or is_self or url_name == 'employee_detail' and employee.user_id == user.id %}active{% endif %}"
+       href="{% url 'organization:my_profile' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Mon profil">
+      <i data-lucide="user"></i>
+      <span class="nav-link-text">Mon profil</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if url_name == 'password_change' %}active{% endif %}"
+       href="{% url 'password_change' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Mot de passe">
+      <i data-lucide="key"></i>
+      <span class="nav-link-text">Mot de passe</span>
+    </a>
+  </li>
+
+{% endif %}
+
+{# ==================== 4. EMPLOYÉ (STANDARD) ==================== #}
+{% if user.role == "EMPLOYE" and not user.is_admin_role %}
+
+  <!-- WORKSPACE -->
+  <li class="nav-section-title">Workspace</li>
+  <li>
+    <a class="nav-link {% if url_name == 'home' %}active{% endif %}"
+       href="{% url 'home' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Tableau de bord">
+      <i data-lucide="layout-dashboard"></i>
+      <span class="nav-link-text">Tableau de bord</span>
+    </a>
+  </li>
+
+  <li class="nav-section-title">Mon espace</li>
+  <li>
+    <a class="nav-link {% if 'my_profile' in url_name or is_self or url_name == 'employee_detail' and employee.user_id == user.id %}active{% endif %}"
+       href="{% url 'organization:my_profile' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Mon profil">
+      <i data-lucide="user"></i>
+      <span class="nav-link-text">Mon profil</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if url_name == 'org_chart' %}active{% endif %}"
+       href="{% url 'organization:org_chart' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Organigramme">
+      <i data-lucide="git-fork"></i>
+      <span class="nav-link-text">Organigramme</span>
+    </a>
+  </li>
+  <li>
+    <a class="nav-link {% if url_name == 'password_change' %}active{% endif %}"
+       href="{% url 'password_change' %}"
+       data-bs-toggle="tooltip" data-bs-placement="right" title="Mot de passe">
+      <i data-lucide="key"></i>
+      <span class="nav-link-text">Mot de passe</span>
+    </a>
+  </li>
+
+{% endif %}
+
+{% endwith %}

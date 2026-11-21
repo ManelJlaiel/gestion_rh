@@ -358,7 +358,38 @@ def document_download(request, pk):
     return FileResponse(document.file.open("rb"), as_attachment=True, filename=document.filename)
 
 
-@rh_only
+@rh_or_admin
+def document_list(request):
+    """Liste globale des documents des employés."""
+    documents = Document.objects.select_related("employee", "uploaded_by").order_by("-uploaded_at")
+    doc_type = request.GET.get("type", "")
+    q = request.GET.get("q", "").strip()
+
+    if doc_type:
+        documents = documents.filter(doc_type=doc_type)
+    if q:
+        documents = documents.filter(
+            Q(title__icontains=q)
+            | Q(employee__first_name__icontains=q)
+            | Q(employee__last_name__icontains=q)
+            | Q(employee__matricule__icontains=q)
+        )
+
+    page = Paginator(documents, 15).get_page(request.GET.get("page"))
+    return render(
+        request,
+        "organization/document_list.html",
+        {
+            "page": page,
+            "doc_types": Document.DocType.choices,
+            "selected_type": doc_type,
+            "q": q,
+            "total_count": documents.count(),
+        },
+    )
+
+
+@rh_or_admin
 @require_POST
 def document_delete(request, pk):
     document = get_object_or_404(Document.objects.select_related("employee"), pk=pk)
@@ -366,6 +397,9 @@ def document_delete(request, pk):
     log_action(request.user, AuditLog.Action.DELETE, document, f"Document supprimé : {document.title} ({document.employee})")
     document.delete()
     messages.success(request, "Le document a été supprimé.")
+    next_url = request.POST.get("next")
+    if next_url:
+        return redirect(next_url)
     return redirect("organization:employee_detail", pk=employee_id)
 
 

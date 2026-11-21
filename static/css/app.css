@@ -1,45 +1,373 @@
 :root {
-  --sidebar-width: 250px;
-  --bs-offcanvas-width: 250px;
+  --primary-color: #174D3B;
+  --primary-hover: #0f3629;
+  --primary-light: #d8eade;
+  --bg-page: #EAF3EE;
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 75px;
+  --bs-offcanvas-width: 260px;
 }
 
-body {
-  background: #f5f6f8;
+/* Page Background */
+html,
+body,
+.main-content,
+main.container {
+  background-color: var(--bg-page) !important;
 }
 
-/* ── Sidebar: locked at exactly 250px, never shrinks ── */
+/* ── App Shell & Independent Scrolling (Desktop) ── */
+@media (min-width: 992px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .app-layout {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+  }
+
+  /* Main content scrolls independently */
+  .main-content {
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-width: 0 !important;
+    flex: 1 1 0% !important;
+    scrollbar-gutter: stable;
+  }
+
+  /* Sidebar takes full viewport height and does not scroll as a whole */
+  aside.sidebar,
+  .sidebar {
+    height: 100vh;
+    min-height: 100vh;
+    max-height: 100vh;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+}
+
+/* ── Top Navbar with #EAF3EE background ── */
+.app-navbar,
+.navbar.sticky-top {
+  background-color: var(--bg-page) !important;
+  border-bottom: 1px solid rgba(23, 77, 59, 0.15) !important;
+  box-shadow: 0 1px 3px rgba(23, 77, 59, 0.05);
+  z-index: 1020;
+}
+
+.app-navbar .navbar-brand {
+  color: var(--primary-color) !important;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.btn-outline-forest {
+  color: var(--primary-color) !important;
+  border: 1px solid var(--primary-color) !important;
+  background-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.35rem 0.5rem;
+  border-radius: 0.375rem;
+  transition: all 0.15s ease;
+}
+
+.btn-outline-forest:hover,
+.btn-outline-forest:focus,
+.btn-outline-forest:active {
+  background-color: var(--primary-color) !important;
+  color: #ffffff !important;
+  border-color: var(--primary-color) !important;
+}
+
+/* ── Sidebar: #EAF3EE background & borders ── */
 aside.sidebar,
 .sidebar {
+  background-color: var(--bg-page) !important;
+  border-right: 1px solid rgba(23, 77, 59, 0.15) !important;
+  color: var(--primary-color) !important;
   flex: 0 0 var(--sidebar-width) !important;
   width: var(--sidebar-width) !important;
   min-width: var(--sidebar-width) !important;
   max-width: var(--sidebar-width) !important;
+  transition: width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              min-width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              max-width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              flex-basis 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
-@media (min-width: 992px) {
-  aside.sidebar,
-  .sidebar {
-    min-height: 100vh;
-    position: sticky;
-    top: 0;
-    align-self: flex-start;
-  }
+/* ── Collapsed state (75px) ── */
+aside.sidebar.collapsed,
+.sidebar.collapsed {
+  --sidebar-width: var(--sidebar-collapsed-width);
+  flex: 0 0 var(--sidebar-collapsed-width) !important;
+  width: var(--sidebar-collapsed-width) !important;
+  min-width: var(--sidebar-collapsed-width) !important;
+  max-width: var(--sidebar-collapsed-width) !important;
 }
 
+/* ── Sidebar Internal Flexbox & Independent Scroll ── */
+.sidebar-inner {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-color: var(--bg-page);
+}
+
+/* Pinned Header (Logo & Collapse toggle) */
+.sidebar-header {
+  flex-shrink: 0;
+  background: inherit;
+}
+
+.text-forest {
+  color: var(--primary-color) !important;
+}
+
+.text-forest-muted {
+  color: rgba(23, 77, 59, 0.65) !important;
+}
+
+.border-forest-subtle {
+  border-color: rgba(23, 77, 59, 0.15) !important;
+}
+
+.btn-toggle-sidebar {
+  color: rgba(23, 77, 59, 0.65) !important;
+}
+
+.btn-toggle-sidebar:hover {
+  color: var(--primary-color) !important;
+}
+
+/* Independently Scrollable Navigation Container */
+.sidebar-nav-scroll {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(23, 77, 59, 0.2) transparent;
+}
+
+.sidebar-nav-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+
+.sidebar-nav-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.sidebar-nav-scroll::-webkit-scrollbar-thumb {
+  background: rgba(23, 77, 59, 0.2);
+  border-radius: 4px;
+}
+
+.sidebar-nav-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(23, 77, 59, 0.4);
+}
+
+/* Pinned Footer (User Profile & Logout) */
+.sidebar-footer-wrapper {
+  flex-shrink: 0;
+  background: inherit;
+}
+
+/* Navigation items on #EAF3EE */
 .sidebar .nav-link {
-  border-radius: .4rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 0.48rem 0.75rem;
+  border-radius: 0.375rem;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  color: var(--primary-color) !important;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
 }
 
 .sidebar .nav-link:hover {
-  background: rgba(255, 255, 255, .08);
+  background: rgba(23, 77, 59, 0.08) !important;
+  color: var(--primary-color) !important;
 }
 
+/* Active Nav Element: #174D3B text, border, icon on crisp pure white card pill */
 .sidebar .nav-link.active {
-  background-color: #0d6efd !important;
-  color: #fff !important;
+  background-color: #ffffff !important;
+  color: var(--primary-color) !important;
+  border: 1px solid var(--primary-color) !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 4px rgba(23, 77, 59, 0.12);
 }
 
+.sidebar .nav-link.active [data-lucide],
+.sidebar .nav-link.active .lucide {
+  color: var(--primary-color) !important;
+  stroke: var(--primary-color) !important;
+}
+
+/* Section titles on #EAF3EE */
+.sidebar .nav-section-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  color: rgba(23, 77, 59, 0.6) !important;
+  margin-top: 1rem;
+  margin-bottom: 0.3rem;
+  padding-left: 0.75rem;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Lucide icons inside sidebar */
+.sidebar [data-lucide],
+.sidebar .lucide {
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+  min-height: 17px;
+  stroke-width: 2;
+  margin-right: 0.65rem;
+  flex-shrink: 0;
+  color: var(--primary-color);
+  stroke: var(--primary-color);
+}
+
+/* ── Brand Logos ── */
+.sidebar .brand-text {
+  max-height: 44px;
+  max-width: 190px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.sidebar .brand-icon {
+  max-height: 42px;
+  max-width: 42px;
+  height: 42px;
+  width: 42px;
+  object-fit: contain;
+}
+
+/* ── Collapsed adaptations ── */
+aside.sidebar.collapsed .nav-section-title {
+  display: none !important;
+}
+
+aside.sidebar.collapsed .nav-link-text,
+aside.sidebar.collapsed .brand-text,
+aside.sidebar.collapsed .user-info-text {
+  display: none !important;
+}
+
+aside.sidebar.collapsed .brand-icon {
+  display: inline-block !important;
+}
+
+aside.sidebar.collapsed .nav-link {
+  justify-content: center;
+  padding: 0.6rem 0;
+}
+
+aside.sidebar.collapsed [data-lucide],
+aside.sidebar.collapsed .lucide {
+  margin-right: 0 !important;
+}
+
+aside.sidebar.collapsed .sidebar-header {
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+}
+
+aside.sidebar.collapsed .sidebar-footer {
+  justify-content: center !important;
+}
+
+/* ── Elevated Components for #EAF3EE Theme ── */
+
+/* Cards stand out cleanly on #EAF3EE */
+.card {
+  background-color: #ffffff;
+  border: 1px solid rgba(23, 77, 59, 0.12) !important;
+  box-shadow: 0 1px 3px rgba(23, 77, 59, 0.05);
+  border-radius: 0.5rem;
+}
+
+.card-header {
+  background-color: #ffffff;
+  border-bottom: 1px solid rgba(23, 77, 59, 0.08);
+}
+
+/* Buttons using #174D3B */
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #ffffff !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
+  color: #ffffff !important;
+}
+
+.btn-outline-primary {
+  color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #ffffff !important;
+}
+
+/* Inputs & Form Focus Rings */
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 0.2rem rgba(23, 77, 59, 0.18) !important;
+}
+
+/* Pagination Active */
+.pagination .page-item.active .page-link {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: #ffffff !important;
+}
+
+.pagination .page-link {
+  color: var(--primary-color);
+}
+
+/* Nav Tabs & Pills on pages */
+.nav-tabs .nav-link.active,
+.nav-pills .nav-link.active:not(.sidebar .nav-link) {
+  color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  border-bottom: 2px solid var(--primary-color) !important;
+  font-weight: 600;
+}
+
+/* Main Content & Tables */
 .main-content {
   min-width: 0 !important;
   flex: 1 1 0% !important;
@@ -49,6 +377,7 @@ aside.sidebar,
   font-size: 1.75rem;
   font-weight: 600;
   line-height: 1.1;
+  color: var(--primary-color);
 }
 
 .table td,

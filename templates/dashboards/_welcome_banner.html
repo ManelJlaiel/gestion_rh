@@ -1,0 +1,29 @@
+<div class="welcome-banner p-3 p-md-4 mb-4 text-white shadow-sm" style="background-color: #164A36; border-radius: 12px;">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+    <div>
+      <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+        <h2 class="h3 fw-bold text-white mb-0">Hello, {{ request.user.first_name|default:request.user.username }}</h2>
+        <span class="badge px-2.5 py-1 text-white border border-white border-opacity-25"
+              style="background-color: rgba(255, 255, 255, 0.2); border-radius: 12px; font-size: 0.75rem; font-weight: 600;">
+          {% if role_badge %}
+            {{ role_badge }}
+          {% elif request.user.role == 'MANAGER' and request.user.employee_profile.department %}
+            Manager &bull; {{ request.user.employee_profile.department.name }}
+          {% else %}
+            {{ request.user.get_role_display }}
+          {% endif %}
+        </span>
+      </div>
+      <div class="small text-white-50" style="font-size: 0.85rem;">
+        {{ banner_subtitle|default:"Bienvenue sur votre espace de gestion des ressources humaines" }}
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge px-3 py-2 text-white border border-white border-opacity-25"
+            style="background-color: rgba(255, 255, 255, 0.15); border-radius: 12px; font-size: 0.8rem; font-weight: 500;">
+        <i data-lucide="calendar" class="me-1" style="width: 14px; height: 14px; vertical-align: middle;"></i>
+        {% now "l d F Y" %}
+      </span>
+    </div>
+  </div>
+</div>
